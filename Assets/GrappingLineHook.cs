@@ -1,137 +1,453 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class GrapplingHook : MonoBehaviour
 {
     [Header("Настройки крюка")]
     public float maxDistance = 10f;
-    public float pullSpeed = 8f;
     public LayerMask grappleLayer;
+
+    [Header("Подтягивание (верёвка)")]
+    public float pullSpeed = 5f;
+    public float minRopeLength = 1f;
+    public float maxRopeLength = 15f;
+
+    [Header("Раскачивание")]
+    public float swingForce      = 14f;
+    public float maxSwingSpeed   = 9f;
+    public float minSpeedToClimb = 3.5f;
+
+    [Header("Крюк к врагу")]
+    public float enemyMassThreshold = 3f;
+    public float enemyPullSpeed = 8f;
+    public int collisionDamage = 15;
+    public float collisionStunDuration = 1f;
+    public float impactRadius = 1.2f;
+
+    [Header("Натяжение верёвки")]
+    public LayerMask groundLayer;
+    public float ropeBreakTime = 1f;
+    public float ropeCooldownTime = 10f;
 
     private LineRenderer line;
     private DistanceJoint2D joint;
     private Vector2 grapplePoint;
-    private bool isGrappling = false;
+    private bool isGrappling;
     private Rigidbody2D rb;
+
     private ParticleSystem hitParticles;
+    private ParticleSystem impactParticles;
+
+    private bool isGrapplingEnemy;
+    private Rigidbody2D enemyRb;
+    private BanditAI enemyAI;
+    private EnemyHealthBar enemyHealthBar;
+    private bool isHeavyEnemy;
+    private bool impactDealt;
+    private float enemyGrappleTimer;
+
+    private float strainTimer;
+    private bool ropeBroken;
+    private float cooldownTimer;
+
+    public static bool isSwinging;
+
+    private GameObject brokenPanel;
+    private Text brokenText;
+
+    void Awake()
+    {
+        foreach (var lr in GetComponents<LineRenderer>())
+        {
+            lr.positionCount = 2;
+            lr.SetPosition(0, transform.position);
+            lr.SetPosition(1, transform.position);
+            lr.enabled = false;
+        }
+    }
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         if (rb == null) rb = GetComponentInParent<Rigidbody2D>();
 
-        line = gameObject.AddComponent<LineRenderer>();
-        line.startWidth = 0.05f;
-        line.endWidth = 0.05f;
-        line.positionCount = 2;
-        line.enabled = false;
+        var allLR = GetComponents<LineRenderer>();
+        for (int i = allLR.Length - 1; i >= 1; i--) Destroy(allLR[i]);
 
-        GameObject psObj = new GameObject("GrappleHitParticles");
-        hitParticles = psObj.AddComponent<ParticleSystem>();
-        hitParticles.Stop();
+        line = allLR.Length > 0 ? allLR[0] : gameObject.AddComponent<LineRenderer>();
+        line.startWidth    = 0.06f;
+        line.endWidth      = 0.03f;
+        line.positionCount = 0;
+        line.useWorldSpace = true;
+        line.material      = new Material(Shader.Find("Sprites/Default"));
+        line.startColor    = Color.black;
+        line.endColor      = Color.black;
+        line.enabled       = false;
 
-        var main = hitParticles.main;
-        main.startLifetime = 0.3f;
-        main.startSpeed = 4f;
-        main.startSize = 0.07f;
-        main.maxParticles = 20;
-        main.playOnAwake = false;
+        hitParticles    = BuildHitParticles();
+        impactParticles = BuildImpactParticles();
 
-        var emission = hitParticles.emission;
-        emission.SetBursts(new ParticleSystem.Burst[]
-            { new ParticleSystem.Burst(0f, 12) });
+        CreateBrokenUI();
+    }
 
-        var shape = hitParticles.shape;
+    ParticleSystem BuildHitParticles()
+    {
+        GameObject go = new GameObject("GrappleHitParticles");
+        go.transform.SetParent(transform);
+        var ps = go.AddComponent<ParticleSystem>();
+        ps.Stop();
+
+        var main = ps.main;
+        main.startLifetime   = new ParticleSystem.MinMaxCurve(0.2f, 0.45f);
+        main.startSpeed      = new ParticleSystem.MinMaxCurve(2f, 5f);
+        main.startSize       = new ParticleSystem.MinMaxCurve(0.04f, 0.09f);
+        main.startColor      = new Color(0.1f, 0.1f, 0.1f);
+        main.maxParticles    = 20;
+        main.playOnAwake     = false;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+
+        var emission = ps.emission;
+        emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 12) });
+
+        var shape = ps.shape;
         shape.shapeType = ParticleSystemShapeType.Sphere;
-        shape.radius = 0.05f;
+        shape.radius    = 0.05f;
+        return ps;
+    }
+
+    ParticleSystem BuildImpactParticles()
+    {
+        GameObject go = new GameObject("GrappleImpactParticles");
+        go.transform.SetParent(transform);
+        var ps = go.AddComponent<ParticleSystem>();
+        ps.Stop();
+
+        var main = ps.main;
+        main.startLifetime   = new ParticleSystem.MinMaxCurve(0.2f, 0.45f);
+        main.startSpeed      = new ParticleSystem.MinMaxCurve(3f, 9f);
+        main.startSize       = new ParticleSystem.MinMaxCurve(0.05f, 0.12f);
+        main.startColor      = new Color(0.9f, 0.05f, 0.05f);
+        main.maxParticles    = 25;
+        main.playOnAwake     = false;
+        main.gravityModifier = 0.4f;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+
+        var emission = ps.emission;
+        emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 20) });
+
+        var shape = ps.shape;
+        shape.shapeType = ParticleSystemShapeType.Circle;
+        shape.radius    = 0.1f;
+
+        var rend = ps.GetComponent<ParticleSystemRenderer>();
+        rend.renderMode    = ParticleSystemRenderMode.Stretch;
+        rend.velocityScale = 0.12f;
+        rend.lengthScale   = 2.5f;
+        return ps;
+    }
+
+    void CreateBrokenUI()
+    {
+        Canvas canvas = FindScreenCanvas();
+        if (canvas == null) return;
+
+        brokenPanel = new GameObject("BrokenRopePanel");
+        brokenPanel.transform.SetParent(canvas.transform, false);
+
+        var rt = brokenPanel.AddComponent<RectTransform>();
+        rt.anchorMin        = Vector2.zero;
+        rt.anchorMax        = Vector2.zero;
+        rt.pivot            = Vector2.zero;
+        rt.anchoredPosition = new Vector2(20f, 20f);
+        rt.sizeDelta        = new Vector2(290f, 55f);
+
+        var bg = brokenPanel.AddComponent<Image>();
+        bg.color = new Color(0.08f, 0f, 0f, 0.85f);
+
+        var textGo = new GameObject("BrokenText");
+        textGo.transform.SetParent(brokenPanel.transform, false);
+
+        brokenText = textGo.AddComponent<Text>();
+        brokenText.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        brokenText.fontSize  = 15;
+        brokenText.color     = new Color(1f, 0.3f, 0.1f);
+        brokenText.alignment = TextAnchor.MiddleCenter;
+
+        var trt = textGo.GetComponent<RectTransform>();
+        trt.anchorMin = Vector2.zero;
+        trt.anchorMax = Vector2.one;
+        trt.sizeDelta = Vector2.zero;
+
+        brokenPanel.SetActive(false);
+    }
+
+    Canvas FindScreenCanvas()
+    {
+        foreach (var c in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            if (c.renderMode == RenderMode.ScreenSpaceOverlay) return c;
+        foreach (var c in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            if (c.renderMode == RenderMode.ScreenSpaceCamera) return c;
+        return null;
     }
 
     void Update()
     {
-        if (Mouse.current.leftButton.wasPressedThisFrame)
-            TryGrapple();
+        UpdateCooldown();
 
-        if (Mouse.current.rightButton.wasPressedThisFrame && isGrappling)
-            StopGrapple();
+        if (Mouse.current.leftButton.wasPressedThisFrame)  TryGrapple();
+        if (Mouse.current.rightButton.wasPressedThisFrame && isGrappling) StopGrapple();
+        if (!isGrappling) return;
 
-        if (isGrappling)
+        if (isGrapplingEnemy)
+            UpdateEnemyGrapple();
+        else
+            UpdateNormalGrapple();
+    }
+
+    void UpdateCooldown()
+    {
+        if (!ropeBroken) return;
+        cooldownTimer -= Time.deltaTime;
+        if (brokenPanel != null)
         {
-            line.SetPosition(0, transform.position);
-            line.SetPosition(1, grapplePoint);
-
-            if (joint != null)
-                joint.distance = Mathf.Max(0.5f,
-                    joint.distance - pullSpeed * Time.deltaTime);
+            brokenPanel.SetActive(cooldownTimer > 0f);
+            if (brokenText != null)
+                brokenText.text = $"⚡ Верёвка порвана! Ремонт: {Mathf.CeilToInt(cooldownTimer)}с";
         }
+        if (cooldownTimer <= 0f)
+        {
+            ropeBroken = false;
+            if (brokenPanel != null) brokenPanel.SetActive(false);
+        }
+    }
+
+    void UpdateNormalGrapple()
+    {
+        if (joint == null) return;
+
+        DrawRope(transform.position, grapplePoint, joint.distance);
+
+        bool pullIn = Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed;
+        bool letOut = Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed;
+
+        if (pullIn)
+            joint.distance = Mathf.Max(minRopeLength, joint.distance - pullSpeed * Time.deltaTime);
+        else if (letOut)
+            joint.distance = Mathf.Min(maxRopeLength, joint.distance + pullSpeed * Time.deltaTime);
+
+        bool isStuck = pullIn && IsOnGround() && rb.linearVelocity.magnitude < 0.15f;
+        if (isStuck)
+        {
+            strainTimer += Time.deltaTime;
+            const float warmupTime = 3f;
+            if (strainTimer > warmupTime)
+            {
+                float t = Mathf.Clamp01((strainTimer - warmupTime) / ropeBreakTime);
+                line.startColor = Color.Lerp(Color.black, Color.red, t);
+                line.endColor   = Color.Lerp(Color.black, Color.red, t);
+
+                if (strainTimer >= warmupTime + ropeBreakTime)
+                {
+                    BreakRope();
+                    return;
+                }
+            }
+        }
+        else
+        {
+            strainTimer     = 0f;
+            line.startColor = Color.black;
+            line.endColor   = Color.black;
+        }
+
+        float swingInput = 0f;
+        if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed)  swingInput = -1f;
+        if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) swingInput =  1f;
+
+        if (swingInput != 0f)
+        {
+            Vector2 toAnchor = ((Vector2)grapplePoint - (Vector2)transform.position).normalized;
+            Vector2 tangent  = new Vector2(toAnchor.y, -toAnchor.x);
+
+            float velInDir = Vector2.Dot(rb.linearVelocity, tangent) * swingInput;
+            float factor   = Mathf.Clamp01(1f - velInDir / maxSwingSpeed);
+            rb.AddForce(tangent * swingInput * swingForce * factor);
+        }
+    }
+
+    void BreakRope()
+    {
+        StopGrapple();
+        ropeBroken    = true;
+        cooldownTimer = ropeCooldownTime;
+        strainTimer   = 0f;
+        if (brokenPanel != null) brokenPanel.SetActive(true);
+    }
+
+    bool IsOnGround()
+    {
+        if (groundLayer == 0) return false;
+        RaycastHit2D hit = Physics2D.Raycast(
+            (Vector2)transform.position, Vector2.down, 1.3f, groundLayer);
+        return hit.collider != null;
+    }
+
+    void DrawRope(Vector2 start, Vector2 end, float ropeLen)
+    {
+        line.positionCount = 2;
+        line.SetPosition(0, start);
+        line.SetPosition(1, end);
+        if (!line.enabled) line.enabled = true;
+    }
+
+    void UpdateEnemyGrapple()
+    {
+        if (enemyRb == null) { StopGrapple(); return; }
+
+        grapplePoint = enemyRb.position;
+        float ropeDist = joint != null
+            ? joint.distance
+            : Vector2.Distance(transform.position, grapplePoint);
+        DrawRope(transform.position, grapplePoint, ropeDist);
+
+        enemyGrappleTimer += Time.deltaTime;
+
+        if (!isHeavyEnemy)
+        {
+            Vector2 dir = ((Vector2)transform.position - enemyRb.position).normalized;
+            enemyRb.linearVelocity = dir * enemyPullSpeed;
+        }
+        else if (joint != null)
+        {
+            joint.connectedAnchor = enemyRb.position;
+
+            bool pullIn = Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed;
+            if (pullIn)
+                joint.distance = Mathf.Max(minRopeLength, joint.distance - pullSpeed * Time.deltaTime);
+
+            float swingInput = 0f;
+            if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed)  swingInput = -1f;
+            if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) swingInput =  1f;
+
+            if (swingInput != 0f)
+            {
+                Vector2 toAnchor = (grapplePoint - (Vector2)transform.position).normalized;
+                Vector2 tangent  = new Vector2(toAnchor.y, -toAnchor.x);
+                float velInDir   = Vector2.Dot(rb.linearVelocity, tangent) * swingInput;
+                float factor     = Mathf.Clamp01(1f - velInDir / maxSwingSpeed);
+                rb.AddForce(tangent * swingInput * swingForce * factor);
+            }
+        }
+
+        if (!impactDealt
+            && enemyGrappleTimer > 0.25f
+            && Vector2.Distance(transform.position, grapplePoint) < impactRadius)
+        {
+            impactDealt = true;
+            DealImpact();
+        }
+    }
+
+    void DealImpact()
+    {
+        if (enemyHealthBar != null)
+            enemyHealthBar.TakeDamage(collisionDamage);
+        else if (enemyAI != null)
+            enemyAI.TakeDamage(collisionDamage);
+
+        if (enemyAI != null) enemyAI.Stun(collisionStunDuration);
+
+        impactParticles.transform.position = grapplePoint;
+        impactParticles.Play();
+        Invoke(nameof(StopImpactParticles), 0.6f);
+
+        StopGrapple();
     }
 
     void TryGrapple()
     {
+        if (ropeBroken)  return;
         if (isGrappling) { StopGrapple(); return; }
 
-        Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(
-            Mouse.current.position.ReadValue());
-        Vector2 dir = (mouseWorld - (Vector2)transform.position).normalized;
+        Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+        Vector2 dir        = (mouseWorld - (Vector2)transform.position).normalized;
+        RaycastHit2D hit   = Physics2D.Raycast(transform.position, dir, maxDistance, grappleLayer);
+        if (hit.collider == null) return;
 
-        RaycastHit2D hit = Physics2D.Raycast(
-            transform.position, dir, maxDistance, grappleLayer);
+        BanditAI       bandit = hit.collider.GetComponentInParent<BanditAI>();
+        EnemyHealthBar hpBar  = hit.collider.GetComponentInParent<EnemyHealthBar>();
+        if (hpBar == null && bandit != null)
+            hpBar = bandit.GetComponent<EnemyHealthBar>();
 
-        if (hit.collider != null)
+        if (bandit != null || hpBar != null)
         {
-            grapplePoint = hit.point;
-            isGrappling = true;
+            enemyRb           = hit.collider.GetComponentInParent<Rigidbody2D>();
+            enemyAI           = bandit;
+            enemyHealthBar    = hpBar;
+            impactDealt       = false;
+            enemyGrappleTimer = 0f;
+            isGrapplingEnemy  = true;
+            isGrappling       = true;
+            grapplePoint      = hit.point;
+
+            isHeavyEnemy = enemyRb == null || enemyRb.mass >= enemyMassThreshold;
+            isSwinging   = isHeavyEnemy;
+
+            if (isHeavyEnemy)
+            {
+                joint = gameObject.AddComponent<DistanceJoint2D>();
+                joint.autoConfigureDistance = false;
+                joint.enableCollision       = true;
+                joint.maxDistanceOnly       = true;
+                joint.connectedAnchor       = hit.point;
+                joint.distance = Vector2.Distance(transform.position, hit.point);
+            }
+        }
+        else
+        {
+            grapplePoint     = hit.point;
+            isGrappling      = true;
+            isGrapplingEnemy = false;
+            strainTimer      = 0f;
 
             joint = gameObject.AddComponent<DistanceJoint2D>();
             joint.autoConfigureDistance = false;
-            joint.enableCollision = true;
-            joint.connectedAnchor = grapplePoint;
+            joint.enableCollision       = true;
+            joint.maxDistanceOnly       = true;
+            joint.connectedAnchor       = grapplePoint;
             joint.distance = Vector2.Distance(transform.position, grapplePoint);
 
-            line.enabled = true;
-
+            isSwinging = true;
             SpawnHitParticles(hit);
         }
     }
 
     void SpawnHitParticles(RaycastHit2D hit)
     {
-        Color surfaceColor = new Color(0.4f, 0.25f, 0.1f);
-
-        SpriteRenderer sr = hit.collider.GetComponent<SpriteRenderer>();
-        if (sr != null) surfaceColor = sr.color;
-
-        UnityEngine.Tilemaps.Tilemap tm =
-            hit.collider.GetComponent<UnityEngine.Tilemaps.Tilemap>();
-        if (tm != null)
-        {
-            var tilePos = tm.WorldToCell(hit.point - hit.normal * 0.01f);
-            UnityEngine.Tilemaps.TileBase tile = tm.GetTile(tilePos);
-            if (tile != null)
-            {
-                surfaceColor = new Color(0.35f, 0.2f, 0.08f);
-            }
-        }
-
         var main = hitParticles.main;
-        main.startColor = surfaceColor;
-        main.startLifetime = 0.5f;
-
+        main.startColor = new Color(0.1f, 0.1f, 0.1f);
         hitParticles.transform.position = grapplePoint;
         hitParticles.Play();
-
-        Invoke(nameof(StopParticles), 0.6f);
+        Invoke(nameof(StopHitParticles), 0.7f);
     }
 
-    void StopParticles()
-    {
-        hitParticles.Stop();
-        hitParticles.Clear();
-    }
+    void StopHitParticles()    { hitParticles.Stop();    hitParticles.Clear(); }
+    void StopImpactParticles() { impactParticles.Stop(); impactParticles.Clear(); }
 
     void StopGrapple()
     {
-        isGrappling = false;
-        line.enabled = false;
+        isGrappling      = false;
+        isGrapplingEnemy = false;
+        isSwinging       = false;
+        enemyRb          = null;
+        enemyAI          = null;
+        enemyHealthBar   = null;
+        strainTimer      = 0f;
+        line.positionCount = 0;
+        line.enabled     = false;
+        line.startColor  = Color.black;
+        line.endColor    = Color.black;
         if (joint != null) Destroy(joint);
     }
 }

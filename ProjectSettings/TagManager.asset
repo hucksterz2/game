@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Ground
   - Enemy
+  - Ladder
   layers:
   - Default
   - TransparentFX
@@ -13,8 +14,8 @@ TagManager:
   - Grapple
   - Water
   - UI
-  - 
-  - 
+  - Ladder
+  - Enemy
   - 
   - 
   - 

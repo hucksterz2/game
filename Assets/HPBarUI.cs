@@ -8,16 +8,29 @@ public class HPBarUI : MonoBehaviour
 
     private Image fillImage;
     private Text hpText;
-    private RectTransform barRect;
 
     void Start()
     {
+        // Авто-поиск PlayerHealth если не назначен в инспекторе
+        if (playerHealth == null)
+            playerHealth = FindFirstObjectByType<PlayerHealth>();
+
         CreateHPBar();
+    }
+
+    Canvas FindScreenCanvas()
+    {
+        // Ищем Screen Space холст, а не World Space (у врагов он World Space)
+        foreach (var c in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            if (c.renderMode == RenderMode.ScreenSpaceOverlay) return c;
+        foreach (var c in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            if (c.renderMode == RenderMode.ScreenSpaceCamera) return c;
+        return null;
     }
 
     void CreateHPBar()
     {
-        Canvas canvas = FindFirstObjectByType<Canvas>();
+        Canvas canvas = FindScreenCanvas();
         if (canvas == null) return;
 
         GameObject panel = new GameObject("HPPanel");
@@ -91,8 +104,8 @@ public class HPBarUI : MonoBehaviour
             1);
 
         fillImage.color = Color.Lerp(
-            new Color(0.85f, 0.1f, 0.1f),  
-            new Color(0.1f, 0.75f, 0.2f), 
+            new Color(0.85f, 0.1f, 0.1f),
+            new Color(0.1f, 0.75f, 0.2f),
             ratio);
 
         if (hpText != null)

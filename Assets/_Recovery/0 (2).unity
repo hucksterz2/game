@@ -1376,14 +1376,12 @@ MonoBehaviour:
   groundCheckDistance: 0.5
   groundLayer:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 8
   aggroRange: 6
   damage: 1
-  attackRange: 1.8
-  attackVertical: 2.5
+  attackRange: 2
   attackDamage: 15
-  attackCooldown: 1.2
-  chaseSpeedMult: 1.25
+  attackCooldown: 1.4
 --- !u!114 &104788669
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1396,7 +1394,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b857555fd9c6d814687848ea9d4f29f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyHealthBar
-  maxHP: 60
+  maxHP: 100
   currentHP: 0
   barOffset: {x: 0, y: 1.2, z: 0}
 --- !u!1 &107881721
@@ -7510,31 +7508,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4631402364940636, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -74.983475
+      value: -74.97
       objectReference: {fileID: 0}
     - target: {fileID: 4631402364940636, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 9.412749
+      value: 9.41
       objectReference: {fileID: 0}
     - target: {fileID: 4631402364940636, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.0798893
+      value: 0.08
       objectReference: {fileID: 0}
     - target: {fileID: 4631402364940636, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.99995965
+      value: 0.99994093
       objectReference: {fileID: 0}
     - target: {fileID: 4631402364940636, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.007045247
+      value: 0.0070162574
       objectReference: {fileID: 0}
     - target: {fileID: 4631402364940636, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.0054971036
+      value: -0.005534057
       objectReference: {fileID: 0}
     - target: {fileID: 4631402364940636, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0.00093461684
+      value: 0.0061903195
       objectReference: {fileID: 0}
     - target: {fileID: 4631402364940636, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -7546,15 +7544,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4631402364940636, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0.103
-      objectReference: {fileID: 0}
-    - target: {fileID: 4661105119886592, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4661105119886592, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.05
+      value: 0.705
       objectReference: {fileID: 0}
     - target: {fileID: 95222202409354866, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
       propertyPath: m_AnimatePhysics
@@ -7601,12 +7591,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1076146770848506, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1152179208}
-    - targetCorrespondingSourceObject: {fileID: 1076146770848506, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1152179209}
-    - targetCorrespondingSourceObject: {fileID: 1076146770848506, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1152179210}
   m_SourcePrefab: {fileID: 100100000, guid: e401b93f8d618fb43b67f19b68229e3c, type: 3}
 --- !u!1001 &256182530
 PrefabInstance:
@@ -10315,35 +10299,35 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -56.43
+      value: -66.61
       objectReference: {fileID: 0}
     - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 8.370401
+      value: 8.46
       objectReference: {fileID: 0}
     - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.030043267
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.99991083
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0.013353867
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: -1.53
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4805181885227780, guid: 2e2183501755a214591e802f3aff33d2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
@@ -14771,7 +14755,6 @@ MonoBehaviour:
   maxRopeLength: 15
   swingForce: 12
   maxSwingSpeed: 9
-  minSpeedToClimb: 3.5
   enemyMassThreshold: 3
   enemyPullSpeed: 8
   collisionDamage: 15
@@ -17614,7 +17597,6 @@ MonoBehaviour:
   maxRopeLength: 15
   swingForce: 14
   maxSwingSpeed: 8
-  minSpeedToClimb: 3.5
   enemyMassThreshold: 3
   enemyPullSpeed: 8
   collisionDamage: 15
@@ -17639,41 +17621,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
   maxHP: 100
   currentHP: 0
---- !u!114 &1152179209
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1152179202}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d830ff125868fb946855888c7b1143ac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BombThrower
-  bombCooldown: 3
-  throwForceX: 8
-  throwForceY: 3
-  bombDamage: 25
-  bombRadius: 2
-  bombFuseTime: 2
---- !u!114 &1152179210
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1152179202}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6510097fbcb1a8b4cb1ab8abf8f186e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RageSystem
-  maxRage: 100
-  ragePerDamageUnit: 4
-  berserkDuration: 8
-  berserkSpeedMult: 2
-  berserkDamageMult: 2
 --- !u!1001 &1157551390
 PrefabInstance:
   m_ObjectHideFlags: 0
