@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 public class EnemyHealthBar : MonoBehaviour
 {
-    public int maxHP = 30;
+    public int maxHP = 60;
     public int currentHP;
     public Vector3 barOffset = new Vector3(0, 1.2f, 0);
 
@@ -24,7 +24,7 @@ public class EnemyHealthBar : MonoBehaviour
         worldCanvas.renderMode = RenderMode.WorldSpace;
 
         RectTransform canvasRect = barObj.GetComponent<RectTransform>();
-        canvasRect.sizeDelta = new Vector2(1f, 0.15f);
+        canvasRect.sizeDelta = new Vector2(120f, 15f);
         barObj.transform.localScale = Vector3.one * 0.01f;
 
         GameObject bg = new GameObject("BG");
@@ -68,6 +68,7 @@ public class EnemyHealthBar : MonoBehaviour
     public void TakeDamage(int amount)
     {
         currentHP = Mathf.Max(0, currentHP - amount);
+        if (barObj != null) barObj.SetActive(true);
         if (currentHP <= 0) Die();
     }
 
