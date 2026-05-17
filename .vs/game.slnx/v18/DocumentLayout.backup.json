@@ -1,0 +1,152 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\Unity\\Projects\\game\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|e:\\unity\\projects\\game\\assets\\bossmechanics\\playerdeathui.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\bossmechanics\\playerdeathui.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|e:\\unity\\projects\\game\\assets\\bossmechanics\\playerhealthbarui.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\bossmechanics\\playerhealthbarui.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|e:\\unity\\projects\\game\\assets\\bossmechanics\\bosshealthbarui.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\bossmechanics\\bosshealthbarui.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|e:\\unity\\projects\\game\\assets\\bossmechanics\\bosshealth.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\bossmechanics\\bosshealth.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|e:\\unity\\projects\\game\\assets\\bossmechanics\\playeratack.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\bossmechanics\\playeratack.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|e:\\unity\\projects\\game\\assets\\bossmechanics\\bossarenatrigger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\bossmechanics\\bossarenatrigger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|e:\\unity\\projects\\game\\assets\\bossmechanics\\bossdamagetester.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\bossmechanics\\bossdamagetester.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|e:\\unity\\projects\\game\\assets\\bossmechanics\\bosscontroler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\bossmechanics\\bosscontroler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "PlayerDeathUI.cs",
+              "DocumentMoniker": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\PlayerDeathUI.cs",
+              "RelativeDocumentMoniker": "Assets\\BossMechanics\\PlayerDeathUI.cs",
+              "ToolTip": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\PlayerDeathUI.cs",
+              "RelativeToolTip": "Assets\\BossMechanics\\PlayerDeathUI.cs",
+              "ViewState": "AgIAAEkAAAAAAAAAAAAqwGQAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-12T12:35:56.967Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "PlayerHealthBarUI.cs",
+              "DocumentMoniker": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\PlayerHealthBarUI.cs",
+              "RelativeDocumentMoniker": "Assets\\BossMechanics\\PlayerHealthBarUI.cs",
+              "ToolTip": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\PlayerHealthBarUI.cs",
+              "RelativeToolTip": "Assets\\BossMechanics\\PlayerHealthBarUI.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-12T12:24:15.045Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "PlayerAtack.cs",
+              "DocumentMoniker": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\PlayerAtack.cs",
+              "RelativeDocumentMoniker": "Assets\\BossMechanics\\PlayerAtack.cs",
+              "ToolTip": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\PlayerAtack.cs",
+              "RelativeToolTip": "Assets\\BossMechanics\\PlayerAtack.cs",
+              "ViewState": "AgIAAD8AAAAAAAAAAAAswE8AAAAvAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T12:45:23.666Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "BossArenaTrigger.cs",
+              "DocumentMoniker": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\BossArenaTrigger.cs",
+              "RelativeDocumentMoniker": "Assets\\BossMechanics\\BossArenaTrigger.cs",
+              "ToolTip": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\BossArenaTrigger.cs",
+              "RelativeToolTip": "Assets\\BossMechanics\\BossArenaTrigger.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T12:32:40.538Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "BossDamageTester.cs",
+              "DocumentMoniker": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\BossDamageTester.cs",
+              "RelativeDocumentMoniker": "Assets\\BossMechanics\\BossDamageTester.cs",
+              "ToolTip": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\BossDamageTester.cs",
+              "RelativeToolTip": "Assets\\BossMechanics\\BossDamageTester.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T11:53:42.021Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "BossHealthBarUI.cs",
+              "DocumentMoniker": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\BossHealthBarUI.cs",
+              "RelativeDocumentMoniker": "Assets\\BossMechanics\\BossHealthBarUI.cs",
+              "ToolTip": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\BossHealthBarUI.cs",
+              "RelativeToolTip": "Assets\\BossMechanics\\BossHealthBarUI.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAIkAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T11:53:11.949Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "BossHealth.cs",
+              "DocumentMoniker": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\BossHealth.cs",
+              "RelativeDocumentMoniker": "Assets\\BossMechanics\\BossHealth.cs",
+              "ToolTip": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\BossHealth.cs",
+              "RelativeToolTip": "Assets\\BossMechanics\\BossHealth.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T11:52:45.044Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "BossControler.cs",
+              "DocumentMoniker": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\BossControler.cs",
+              "RelativeDocumentMoniker": "Assets\\BossMechanics\\BossControler.cs",
+              "ToolTip": "E:\\Unity\\Projects\\game\\Assets\\BossMechanics\\BossControler.cs",
+              "RelativeToolTip": "Assets\\BossMechanics\\BossControler.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T11:52:00.883Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
