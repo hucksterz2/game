@@ -71,7 +71,7 @@ public class EnemyHealthBar : MonoBehaviour
     private bool isDead;
 
     [Header("Смерть")]
-    public float deathDestroyDelay = 1.2f;   // сколько секунд ждать после смерти (время анимации)
+    public float deathDestroyDelay = 1.2f;
 
     public void TakeDamage(int amount)
     {
@@ -82,14 +82,12 @@ public class EnemyHealthBar : MonoBehaviour
         if (currentHP <= 0)
         {
             isDead = true;
-            // Уведомляем BanditAI об анимации смерти ДО уничтожения
             BanditAI bandit = GetComponent<BanditAI>();
             if (bandit != null) bandit.OnDeath();
             Die();
         }
         else
         {
-            // Уведомляем BanditAI о получении урона
             BanditAI bandit = GetComponent<BanditAI>();
             if (bandit != null) bandit.OnHurt();
         }

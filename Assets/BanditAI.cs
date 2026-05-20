@@ -20,7 +20,7 @@ public class BanditAI : MonoBehaviour
     public int   attackDamage      = 15;
     public float attackCooldown    = 1.2f;
     public float chaseSpeedMult    = 1.25f;
-    public float hurtDuration      = 0.45f;  // длительность анимации получения урона
+    public float hurtDuration      = 0.45f;
 
     const int ANIM_IDLE   = 0;
     const int ANIM_ATTACK = 1;
@@ -238,7 +238,6 @@ public class BanditAI : MonoBehaviour
 
     public void Stun(float duration)
     {
-        // Не перезаписывать состояние смерти (stunTimer = 999)
         EnemyHealthBar bar = GetComponent<EnemyHealthBar>();
         if (bar != null && bar.IsDead) return;
 
@@ -250,7 +249,6 @@ public class BanditAI : MonoBehaviour
 
     public void StunWithKnockback(float duration, Vector2 velocity)
     {
-        // Не применять кикбэк и оглушение к мёртвым бандитам
         EnemyHealthBar bar = GetComponent<EnemyHealthBar>();
         if (bar != null && bar.IsDead) return;
 
@@ -266,11 +264,9 @@ public class BanditAI : MonoBehaviour
         EnemyHealthBar bar = GetComponent<EnemyHealthBar>();
         if (bar != null && bar.IsDead) return;
 
-        // EnemyHealthBar.TakeDamage вызовет OnHurt/OnDeath сам через нотификацию
         if (bar != null) bar.TakeDamage(amount);
         else
         {
-            // Если нет EnemyHealthBar — обработать анимацию здесь
             if (!isAttacking) TriggerAnim("Hurt");
         }
 
@@ -280,7 +276,6 @@ public class BanditAI : MonoBehaviour
         DamageNumber.Show(amount, pos + Vector3.up * 0.6f);
     }
 
-    // Вызывается из EnemyHealthBar когда бандит получает урон (но не умирает)
     public void OnHurt()
     {
         if (!isAttacking)
@@ -291,13 +286,9 @@ public class BanditAI : MonoBehaviour
         }
     }
 
-    // Вызывается из EnemyHealthBar когда бандит умирает
     public void OnDeath()
     {
         TriggerAnim("Die");
-        // Переводим в кинематику — игнорирует все силы и AddForce,
-        // но прямое присваивание linearVelocity всё ещё работает,
-        // поэтому обнуляем скорость сами
         rb.linearVelocity = Vector2.zero;
         rb.bodyType       = RigidbodyType2D.Kinematic;
         isStunned         = true;
