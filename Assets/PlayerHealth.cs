@@ -5,10 +5,14 @@ using UnityEngine.EventSystems;
 
 public class PlayerHealth : MonoBehaviour
 {
-    public int maxHP = 100;
-    public int currentHP;
+    public int   maxHP       = 100;
+    public int   currentHP;
+    public float regenDelay  = 10f;
+    public int   regenAmount = 5;
 
     private PlayerController pc;
+    private float noHitTimer;
+    private float regenTimer;
 
     void Start()
     {
@@ -17,9 +21,29 @@ public class PlayerHealth : MonoBehaviour
         if (pc == null) pc = GetComponentInParent<PlayerController>();
     }
 
+    void Update()
+    {
+        if (isDead || currentHP <= 0) return;
+        noHitTimer += Time.deltaTime;
+        if (noHitTimer >= regenDelay && currentHP < maxHP)
+        {
+            regenTimer += Time.deltaTime;
+            if (regenTimer >= 1f)
+            {
+                regenTimer -= 1f;
+                currentHP   = Mathf.Min(maxHP, currentHP + regenAmount);
+            }
+        }
+        else
+        {
+            regenTimer = 0f;
+        }
+    }
+
     public void TakeDamage(int amount)
     {
         if (isDead || currentHP <= 0) return;
+        noHitTimer = 0f;
 
         if (pc == null)
         {
