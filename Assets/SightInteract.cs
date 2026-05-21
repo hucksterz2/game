@@ -2,49 +2,49 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(CircleCollider2D))]
 public class SightInteract : MonoBehaviour
 {
     public enum DisplayMode { SimpleText, DialogueWindow }
 
-    [Header("ÐÅÆÈÌ ÎÒÎÁÐÀÆÅÍÈß")]
+    [Header("Ðåæèì")]
     public DisplayMode mode = DisplayMode.SimpleText;
 
-    [Header("ÒÅÊÑÒ")]
+    [Header("Òåêñò")]
     [TextArea(3, 10)] public string signText = "Hello!";
     public string promptText = "[ E ] Read";
 
-    [Header("ÄËß DialogueWindow")]
+    [Header("Äëÿ DialogueWindow")]
     public Sprite portrait;
     public bool splitByDoubleNewline = true;
 
-    [Header("ÄËß SimpleText")]
+    [Header("Äëÿ SimpleText")]
     public int fontSize = 32;
     public Color textColor = Color.yellow;
     public Color promptColor = Color.white;
     [Range(0f, 1f)] public float promptPosY = 0.75f;
     [Range(0f, 1f)] public float messagePosY = 0.85f;
 
-    private bool playerInZone = false;
-    private bool isReading = false;
+    [Header("Ðàäèóñ âçàèìîäåéñòâèÿ")]
+    public float interactRadius = 3f;
+
+    private bool isReading;
     private GameObject promptObj;
     private GameObject messageObj;
+    private Transform player;
 
     void Start()
     {
-        CircleCollider2D col = GetComponent<CircleCollider2D>();
-        col.isTrigger = true;
+        BuildUI();
+    }
 
-        Canvas canvas = FindFirstObjectByType<Canvas>();
-        if (canvas == null)
-        {
-            GameObject canvasObj = new GameObject("Canvas");
-            canvas = canvasObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 999;
-            canvasObj.AddComponent<CanvasScaler>();
-            canvasObj.AddComponent<GraphicRaycaster>();
-        }
+    void BuildUI()
+    {
+        GameObject canvasObj = new GameObject("SignCanvas");
+        Canvas canvas = canvasObj.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 900;
+        canvasObj.AddComponent<CanvasScaler>();
+        canvasObj.AddComponent<GraphicRaycaster>();
 
         promptObj = MakeText(canvas.transform, promptText, promptColor, promptPosY);
         if (mode == DisplayMode.SimpleText)
@@ -68,7 +68,6 @@ public class SightInteract : MonoBehaviour
         t.supportRichText = true;
         t.horizontalOverflow = HorizontalWrapMode.Wrap;
         t.verticalOverflow = VerticalWrapMode.Overflow;
-
         RectTransform r = go.GetComponent<RectTransform>();
         r.anchorMin = new Vector2(0.05f, anchorY);
         r.anchorMax = new Vector2(0.95f, anchorY);
@@ -78,76 +77,54 @@ public class SightInteract : MonoBehaviour
         return go;
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    bool PlayerNear()
     {
-        if (other.CompareTag("Player") || other.transform.root.CompareTag("Player"))
-            playerInZone = true;
-    }
-
-    void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.CompareTag("Player") || other.transform.root.CompareTag("Player"))
+        if (player == null)
         {
-            playerInZone = false;
-            isReading = false;
-            if (messageObj != null) messageObj.SetActive(false);
+            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            if (p == null) return false;
+            player = p.transform;
         }
+        return Vector2.Distance(transform.position, player.position) <= interactRadius;
     }
 
     void Update()
     {
+        bool near = PlayerNear();
         bool dialogActive = DialogueManager.Instance != null && DialogueManager.Instance.IsActive;
+        bool eDown = Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
 
         if (mode == DisplayMode.DialogueWindow)
         {
-            if (playerInZone && !dialogActive)
+            if (near && !dialogActive)
             {
                 promptObj.SetActive(true);
-                if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
-                {
-                    promptObj.SetActive(false);
-                    StartDialog();
-                }
+                if (eDown) { promptObj.SetActive(false); OpenDialog(); }
             }
             else promptObj.SetActive(false);
         }
         else
         {
-            if (playerInZone && !isReading)
+            if (!near) { promptObj.SetActive(false); if (messageObj != null) messageObj.SetActive(false); isReading = false; return; }
+
+            if (!isReading)
             {
                 promptObj.SetActive(true);
                 if (messageObj != null) messageObj.SetActive(false);
-                if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
-                {
-                    isReading = true;
-                    promptObj.SetActive(false);
-                    if (messageObj != null) messageObj.SetActive(true);
-                }
-            }
-            else if (playerInZone && isReading)
-            {
-                if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
-                {
-                    isReading = false;
-                    if (messageObj != null) messageObj.SetActive(false);
-                    promptObj.SetActive(true);
-                }
+                if (eDown) { isReading = true; promptObj.SetActive(false); if (messageObj != null) messageObj.SetActive(true); }
             }
             else
             {
-                promptObj.SetActive(false);
-                if (messageObj != null) messageObj.SetActive(false);
+                if (eDown) { isReading = false; if (messageObj != null) messageObj.SetActive(false); promptObj.SetActive(true); }
             }
         }
     }
 
-    void StartDialog()
+    void OpenDialog()
     {
-        string[] lines;
-        if (splitByDoubleNewline)
-            lines = signText.Split(new string[] { "\n\n" }, System.StringSplitOptions.RemoveEmptyEntries);
-        else
-            lines = new string[] { signText };
+        string[] lines = splitByDoubleNewline
+            ? signText.Split(new[] { "\n\n" }, System.StringSplitOptions.RemoveEmptyEntries)
+            : new[] { signText };
 
         if (DialogueManager.Instance == null)
         {
@@ -155,5 +132,11 @@ public class SightInteract : MonoBehaviour
             go.AddComponent<DialogueManager>();
         }
         DialogueManager.Instance.StartDialogue(portrait, lines);
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, interactRadius);
     }
 }
