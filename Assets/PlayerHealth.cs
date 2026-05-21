@@ -196,6 +196,7 @@ public class PlayerHealth : MonoBehaviour
         Time.timeScale = 1f;
         var a = GetComponentInChildren<Animator>();
         if (a != null) a.speed = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        string sceneName = SceneManager.GetActiveScene().name;
+        SceneManager.LoadScene(sceneName);
     }
 }

@@ -42,6 +42,7 @@ public class GrapplingHook : MonoBehaviour
     private bool isGrapplingEnemy;
     private Rigidbody2D enemyRb;
     private BanditAI enemyAI;
+    private HeavyBanditBoss enemyBoss;
     private EnemyHealthBar enemyHealthBar;
     private bool isHeavyEnemy;
     private bool impactDealt;
@@ -339,12 +340,14 @@ public class GrapplingHook : MonoBehaviour
 
     void UpdateEnemyGrapple()
     {
-        if (enemyAI != null && !enemyAI.gameObject) enemyAI = null;
-        if (enemyRb != null && !enemyRb.gameObject) enemyRb = null;
-        if (enemyRb == null && enemyAI == null) { StopGrapple(); return; }
+        if (enemyAI   != null && !enemyAI.gameObject)   enemyAI   = null;
+        if (enemyBoss != null && !enemyBoss.gameObject) enemyBoss = null;
+        if (enemyRb   != null && !enemyRb.gameObject)   enemyRb   = null;
+        if (enemyRb == null && enemyAI == null && enemyBoss == null) { StopGrapple(); return; }
 
-        grapplePoint = enemyAI  != null ? (Vector2)enemyAI.transform.position :
-                       enemyRb != null ? enemyRb.position : grapplePoint;
+        grapplePoint = enemyAI   != null ? (Vector2)enemyAI.transform.position :
+                       enemyBoss != null ? (Vector2)enemyBoss.transform.position :
+                       enemyRb   != null ? enemyRb.position : grapplePoint;
 
         float ropeDist = joint != null
             ? joint.distance
@@ -358,6 +361,8 @@ public class GrapplingHook : MonoBehaviour
             Vector2 dir = ((Vector2)transform.position - grapplePoint).normalized;
             if (enemyAI != null)
                 enemyAI.Pull(dir * enemyPullSpeed);
+            else if (enemyBoss != null && enemyRb != null)
+                enemyRb.linearVelocity = dir * enemyPullSpeed * 0.7f;
             else if (enemyRb != null)
                 enemyRb.linearVelocity = dir * enemyPullSpeed;
         }
@@ -405,7 +410,9 @@ public class GrapplingHook : MonoBehaviour
 
     void DealImpact()
     {
-        if (enemyHealthBar != null)
+        if (enemyBoss != null)
+            enemyBoss.TakeDamage(collisionDamage);
+        else if (enemyHealthBar != null)
             enemyHealthBar.TakeDamage(collisionDamage);
         else if (enemyAI != null)
             enemyAI.TakeDamage(collisionDamage);
@@ -424,24 +431,75 @@ public class GrapplingHook : MonoBehaviour
         if (ropeBroken)  return;
         if (isGrappling) { StopGrapple(); return; }
 
+        foreach (var j in GetComponents<DistanceJoint2D>()) Destroy(j);
+        joint = null;
+
+        if (line != null)
+        {
+            line.positionCount = 0;
+            line.enabled       = false;
+            line.startColor    = Color.black;
+            line.endColor      = Color.black;
+        }
+
         Vector2 mouseWorld = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         Vector2 dir        = (mouseWorld - (Vector2)transform.position).normalized;
         RaycastHit2D hit   = Physics2D.Raycast(transform.position, dir, maxDistance, grappleLayer);
+
+        HeavyBanditBoss bossFallback = FindFirstObjectByType<HeavyBanditBoss>();
+        if (bossFallback != null && !bossFallback.IsDead)
+        {
+            Vector2 bossPos    = bossFallback.transform.position;
+            float bossDist     = Vector2.Distance(mouseWorld, bossPos);
+            float playerToBoss = Vector2.Distance(transform.position, bossPos);
+            if (bossDist < 3f && playerToBoss <= maxDistance + 5f)
+            {
+                int reaction = bossFallback.HookReaction();
+                if (reaction == 2) { bossFallback.ExecuteGrabHook(); return; }
+                if (reaction == 1) { bossFallback.ExecuteDodge();   return; }
+                if (reaction == 0)
+                {
+                    enemyBoss = bossFallback;
+                    enemyRb   = bossFallback.GetComponent<Rigidbody2D>();
+                    enemyAI   = null;
+                    enemyHealthBar = null;
+                    impactDealt       = false;
+                    enemyGrappleTimer = 0f;
+                    isGrapplingEnemy  = true;
+                    isGrappling       = true;
+                    grapplePoint      = bossPos;
+                    isHeavyEnemy      = false;
+                    isSwinging        = false;
+                    return;
+                }
+            }
+        }
+
         if (hit.collider == null) return;
 
         Transform hitRoot = hit.collider.transform.root;
-        BanditAI       bandit = hit.collider.GetComponentInParent<BanditAI>()
-                             ?? hitRoot.GetComponentInChildren<BanditAI>();
-        EnemyHealthBar hpBar  = hit.collider.GetComponentInParent<EnemyHealthBar>()
-                             ?? hitRoot.GetComponentInChildren<EnemyHealthBar>();
+        BanditAI        bandit = hit.collider.GetComponentInParent<BanditAI>()
+                              ?? hitRoot.GetComponentInChildren<BanditAI>();
+        HeavyBanditBoss boss   = hit.collider.GetComponentInParent<HeavyBanditBoss>()
+                              ?? hitRoot.GetComponentInChildren<HeavyBanditBoss>();
+        EnemyHealthBar  hpBar  = hit.collider.GetComponentInParent<EnemyHealthBar>()
+                              ?? hitRoot.GetComponentInChildren<EnemyHealthBar>();
         if (hpBar == null && bandit != null)
             hpBar = bandit.GetComponent<EnemyHealthBar>();
 
-        if (bandit != null || hpBar != null)
+        if (bandit != null || boss != null || hpBar != null)
         {
+            if (boss != null)
+            {
+                int reaction = boss.HookReaction();
+                if (reaction == 2) { boss.ExecuteGrabHook(); return; }
+                if (reaction == 1) { boss.ExecuteDodge();    return; }
+            }
+
             enemyRb           = hit.collider.GetComponentInParent<Rigidbody2D>()
                              ?? hitRoot.GetComponentInChildren<Rigidbody2D>();
             enemyAI           = bandit;
+            enemyBoss         = boss;
             enemyHealthBar    = hpBar;
             impactDealt       = false;
             enemyGrappleTimer = 0f;
@@ -449,7 +507,7 @@ public class GrapplingHook : MonoBehaviour
             isGrappling       = true;
             grapplePoint      = hit.point;
 
-            isHeavyEnemy = bandit == null && (enemyRb == null || enemyRb.mass >= enemyMassThreshold);
+            isHeavyEnemy = bandit == null && boss == null && (enemyRb == null || enemyRb.mass >= enemyMassThreshold);
             isSwinging   = isHeavyEnemy;
 
             if (isHeavyEnemy)
@@ -501,6 +559,7 @@ public class GrapplingHook : MonoBehaviour
         isSwinging       = false;
         enemyRb          = null;
         enemyAI          = null;
+        enemyBoss        = null;
         enemyHealthBar   = null;
         strainTimer      = 0f;
         swingMomentum    = 0f;

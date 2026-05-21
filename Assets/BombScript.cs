@@ -45,8 +45,18 @@ public class BombScript : MonoBehaviour
         SpawnFlash();
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, blastRadius);
+        System.Collections.Generic.HashSet<HeavyBanditBoss> hitBosses = new System.Collections.Generic.HashSet<HeavyBanditBoss>();
         foreach (var col in hits)
         {
+            HeavyBanditBoss boss = col.GetComponent<HeavyBanditBoss>()
+                                ?? col.GetComponentInParent<HeavyBanditBoss>();
+            if (boss != null && !hitBosses.Contains(boss))
+            {
+                hitBosses.Add(boss);
+                boss.TakeDamage(damage);
+                continue;
+            }
+
             BanditAI bandit = col.GetComponent<BanditAI>()
                            ?? col.GetComponentInParent<BanditAI>();
             if (bandit != null)

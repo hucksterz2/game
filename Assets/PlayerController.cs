@@ -41,9 +41,9 @@ public class PlayerController : MonoBehaviour
     public float   attackCooldown = 0.25f;
     public float   comboWindow    = 0.8f;
     public int[]   comboDamage    = { 8, 13, 20 };
-    public float[] comboRangeX    = { 2.7f, 1.8f, 2.6f };
-    public float[] comboRangeY    = { 1.0f, 1.8f, 1.2f };
-    public float[] comboOffsetX   = { 1.5f, 0.9f, 1.2f };
+    public float[] comboRangeX    = { 3.2f, 2.4f, 3.2f };
+    public float[] comboRangeY    = { 1.4f, 2.0f, 1.6f };
+    public float[] comboOffsetX   = { 1.7f, 1.1f, 1.4f };
     public float[] comboOffsetY   = { 0.0f, -0.1f, 0.0f };
 
     [Header("Блок / Парирование (Q)")]
@@ -99,13 +99,15 @@ public class PlayerController : MonoBehaviour
     private bool isTouchingWall, isWallSliding, wasTouchingWall;
     private int  wallDirection;
 
-    private bool       isPlunging;
-    private bool       plungeAnimTriggered;
-    private float      plungeStartDist;
-    private float      plungeTimer;
-    private float      plungeGraceTimer;
-    private BanditAI   plungeTarget;
-    private GameObject plungePromptGO;
+    private bool            isPlunging;
+    private bool            plungeAnimTriggered;
+    private float           plungeStartDist;
+    private float           plungeTimer;
+    private float           plungeGraceTimer;
+    private BanditAI        plungeTarget;
+    private HeavyBanditBoss plungeTargetBoss;
+    private HeavyBanditBoss cachedBoss;
+    private GameObject      plungePromptGO;
 
     private float stuckTimer;
     private float lastInputX;
@@ -135,6 +137,7 @@ public class PlayerController : MonoBehaviour
 
         rageSystem   = GetComponent<RageSystem>() ?? GetComponentInParent<RageSystem>();
         playerSprite = GetComponentInChildren<SpriteRenderer>();
+        cachedBoss   = FindFirstObjectByType<HeavyBanditBoss>();
         rb.linearVelocity = Vector2.zero;
     }
 
@@ -191,6 +194,7 @@ public class PlayerController : MonoBehaviour
             isPlunging       = false;
             plungeGraceTimer = 0f;
             plungeTarget     = null;
+            plungeTargetBoss = null;
             return;
         }
         if (startupDelay > 0f) { startupDelay -= Time.deltaTime; rb.linearVelocity = Vector2.zero; return; }
@@ -208,6 +212,7 @@ public class PlayerController : MonoBehaviour
                 plungeAnimTriggered = false;
                 plungeGraceTimer    = 0f;
                 plungeTarget        = null;
+                plungeTargetBoss    = null;
                 isDashing           = false;
                 isClimbing          = false;
                 isOnLadder          = false;
@@ -307,7 +312,7 @@ public class PlayerController : MonoBehaviour
 
         if (isPlunging)
         {
-            if (plungeTarget == null)
+            if (plungeTarget == null && plungeTargetBoss == null)
             {
                 isPlunging = false;
                 plungeAnimTriggered = false;
@@ -316,9 +321,13 @@ public class PlayerController : MonoBehaviour
             }
             else
             {
+                Transform targetTf = plungeTarget != null
+                    ? plungeTarget.transform
+                    : plungeTargetBoss.transform;
+
                 float yVelBefore = rb.linearVelocity.y;
                 plungeTimer += Time.deltaTime;
-                float dist = Vector2.Distance(transform.position, plungeTarget.transform.position);
+                float dist = Vector2.Distance(transform.position, targetTf.position);
 
                 float curPlungeSpeed = dist < 2.2f ? plungeSpeed * 0.35f : plungeSpeed;
                 rb.linearVelocity = new Vector2(0f, -curPlungeSpeed);
@@ -351,7 +360,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (!grounded && rb.linearVelocity.y < -1.5f && plungeTarget == null)
+        if (!grounded && rb.linearVelocity.y < -1.5f && plungeTarget == null && plungeTargetBoss == null)
         {
             Vector2 boxCenter = (Vector2)transform.position + Vector2.down * (plungeDetectDist * 0.5f + 0.5f);
             Collider2D[] belowHits = Physics2D.OverlapBoxAll(boxCenter, new Vector2(0.8f, plungeDetectDist), 0f);
@@ -359,21 +368,25 @@ public class PlayerController : MonoBehaviour
             {
                 BanditAI b = col.GetComponentInParent<BanditAI>();
                 if (b != null) { plungeTarget = b; break; }
+                HeavyBanditBoss boss = col.GetComponentInParent<HeavyBanditBoss>();
+                if (boss != null && !boss.IsDead) { plungeTargetBoss = boss; break; }
             }
         }
         else if (grounded || rb.linearVelocity.y >= 0f)
         {
-            if (plungeTarget != null) { plungeTarget = null; ShowPlungePrompt(false); }
+            if (plungeTarget     != null) { plungeTarget     = null; ShowPlungePrompt(false); }
+            if (plungeTargetBoss != null) { plungeTargetBoss = null; ShowPlungePrompt(false); }
         }
 
-        ShowPlungePrompt(plungeTarget != null);
+        ShowPlungePrompt(plungeTarget != null || plungeTargetBoss != null);
 
-        if (plungeTarget != null && Keyboard.current.eKey.wasPressedThisFrame)
+        if ((plungeTarget != null || plungeTargetBoss != null) && Keyboard.current.eKey.wasPressedThisFrame)
         {
             isPlunging          = true;
             plungeAnimTriggered = true;
             plungeTimer         = 0f;
-            plungeStartDist = Vector2.Distance(transform.position, plungeTarget.transform.position);
+            Transform ptf = plungeTarget != null ? plungeTarget.transform : plungeTargetBoss.transform;
+            plungeStartDist = Vector2.Distance(transform.position, ptf.position);
             if (plungeStartDist < 0.1f) plungeStartDist = 3f;
             SafeSetTrigger("Plunge");
             ShowPlungePrompt(false);
@@ -434,8 +447,10 @@ public class PlayerController : MonoBehaviour
         isPlunging          = false;
         plungeGraceTimer    = 0.55f;
         plungeAnimTriggered = false;
-        BanditAI target = plungeTarget;
-        plungeTarget = null;
+        BanditAI        target     = plungeTarget;
+        HeavyBanditBoss bossTarget = plungeTargetBoss;
+        plungeTarget     = null;
+        plungeTargetBoss = null;
         ShowPlungePrompt(false);
 
         if (rb.gravityScale == 0f) rb.gravityScale = originalGravityScale;
@@ -449,6 +464,16 @@ public class PlayerController : MonoBehaviour
 
             if (playerCol != null)
                 foreach (var ec in target.GetComponentsInChildren<Collider2D>(true))
+                {
+                    Physics2D.IgnoreCollision(playerCol, ec, true);
+                    StartCoroutine(RestoreCollision(playerCol, ec, 1.5f));
+                }
+        }
+        else if (bossTarget != null)
+        {
+            bossTarget.TakeDamage(plungeDamage);
+            if (playerCol != null)
+                foreach (var ec in bossTarget.GetComponentsInChildren<Collider2D>(true))
                 {
                     Physics2D.IgnoreCollision(playerCol, ec, true);
                     StartCoroutine(RestoreCollision(playerCol, ec, 1.5f));
@@ -471,12 +496,14 @@ public class PlayerController : MonoBehaviour
         foreach (var col in hits)
         {
             if (col.gameObject == gameObject) continue;
-            BanditAI       bandit = col.GetComponentInParent<BanditAI>();
-            EnemyHealthBar bar    = col.GetComponentInParent<EnemyHealthBar>();
-            if (bandit == null && bar == null) continue;
+            BanditAI        bandit = col.GetComponentInParent<BanditAI>();
+            EnemyHealthBar  bar    = col.GetComponentInParent<EnemyHealthBar>();
+            HeavyBanditBoss boss   = col.GetComponentInParent<HeavyBanditBoss>();
+            if (bandit == null && bar == null && boss == null) continue;
 
             dashThroughUsed = true;
-            if (bar    != null) bar.TakeDamage(dashDamage);
+            if (boss   != null)      boss.TakeDamage(dashDamage);
+            else if (bar != null)    bar.TakeDamage(dashDamage);
             else if (bandit != null) bandit.TakeDamage(dashDamage);
             if (bandit != null) bandit.ApplySlow(1.5f);
 
@@ -556,23 +583,49 @@ public class PlayerController : MonoBehaviour
         float rageMult = rageSystem != null ? rageSystem.DamageMultiplier : 1f;
         int  damage  = Mathf.RoundToInt(comboDamage[Mathf.Clamp(comboStep, 0, comboDamage.Length - 1)] * rageMult);
         bool isFinal = (comboStep == 2);
+        bool bossHit = false;
 
         foreach (var col in hits)
         {
             if (col.gameObject == gameObject) continue;
-            EnemyHealthBar bar    = col.GetComponentInParent<EnemyHealthBar>();
+            EnemyHealthBar  bar    = col.GetComponentInParent<EnemyHealthBar>();
             BanditAI        bandit = col.GetComponentInParent<BanditAI>();
-            if (bar == null && bandit == null) continue;
+            HeavyBanditBoss boss   = col.GetComponentInParent<HeavyBanditBoss>();
+            if (bar == null && bandit == null && boss == null) continue;
 
-            Transform root = bandit != null ? bandit.transform : bar.transform;
+            Transform root = bandit != null ? bandit.transform
+                           : boss   != null ? boss.transform
+                           : bar.transform;
             if (Vector2.Distance((Vector2)transform.position, (Vector2)root.position) > hardMaxReach)
                 continue;
 
-            if (bar != null)         bar.TakeDamage(damage);
+            if (boss   != null) { boss.TakeDamage(damage); bossHit = true; }
+            else if (bar != null)    bar.TakeDamage(damage);
             else if (bandit != null) bandit.TakeDamage(damage);
 
             if (bandit != null && isFinal)
                 bandit.StunWithKnockback(0.65f, new Vector2(dir * 6f, 3f));
+        }
+
+        if (!bossHit)
+        {
+            if (cachedBoss == null) cachedBoss = FindFirstObjectByType<HeavyBanditBoss>();
+            if (cachedBoss != null && !cachedBoss.IsDead)
+            {
+                Vector2 toBoss = (Vector2)cachedBoss.transform.position - (Vector2)transform.position;
+                bool inFront   = Mathf.Sign(toBoss.x) == Mathf.Sign(dir) || Mathf.Abs(toBoss.x) < 0.5f;
+                if (inFront && toBoss.magnitude <= hardMaxReach + 1.5f)
+                    cachedBoss.TakeDamage(damage);
+            }
+
+            var brB = FindFirstObjectByType<BringerOfDeathBoss>();
+            if (brB != null && !brB.IsDead)
+            {
+                Vector2 toBoss = (Vector2)brB.transform.position - (Vector2)transform.position;
+                bool inFront   = Mathf.Sign(toBoss.x) == Mathf.Sign(dir) || Mathf.Abs(toBoss.x) < 0.5f;
+                if (inFront && toBoss.magnitude <= hardMaxReach + 1.5f)
+                    brB.TakeDamage(damage);
+            }
         }
 
         bool wasFinal       = (comboStep == 2);
@@ -592,11 +645,10 @@ public class PlayerController : MonoBehaviour
         {
             BanditAI b = col.GetComponentInParent<BanditAI>()
                       ?? col.transform.root.GetComponentInChildren<BanditAI>();
-            if (b != null)
-            {
-                b.Stun(parryStunDuration);
-                b.TakeDamage(parryReflectDamage);
-            }
+            if (b != null) { b.Stun(parryStunDuration); b.TakeDamage(parryReflectDamage); }
+
+            HeavyBanditBoss boss = col.GetComponentInParent<HeavyBanditBoss>();
+            if (boss != null) boss.TakeDamage(parryReflectDamage);
         }
     }
 
