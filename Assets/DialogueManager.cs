@@ -134,7 +134,8 @@ public class DialogueManager : MonoBehaviour
         foreach (char c in fullLine)
         {
             bodyText.text += c;
-            yield return new WaitForSecondsRealtime(typeSpeed);
+            float speed = SettingsManager.Instance != null ? SettingsManager.DialogueSpeed : typeSpeed;
+            yield return new WaitForSecondsRealtime(speed);
         }
         isTyping = false;
     }

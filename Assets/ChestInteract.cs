@@ -5,6 +5,9 @@ using Cainos.PixelArtPlatformer_VillageProps;
 
 public class ChestInteract : MonoBehaviour
 {
+    [Header("Если этот сундук даёт ключ")]
+    public string setsFlag = "";
+
     [Header("Подсказки")]
     public string openPrompt = "[ E ] Открыть";
     public string closePrompt = "[ E ] Закрыть";
@@ -93,6 +96,10 @@ public class ChestInteract : MonoBehaviour
                 if (!chest.IsOpened)
                 {
                     chest.Open();
+
+                    if (!string.IsNullOrEmpty(setsFlag))
+                        GameFlags.Set(setsFlag, true);
+
                     if (!string.IsNullOrEmpty(lootMessage))
                     {
                         promptObj.SetActive(false);
