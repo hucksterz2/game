@@ -3,99 +3,92 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using Cainos.PixelArtPlatformer_VillageProps;
 
-[RequireComponent(typeof(CircleCollider2D))]
 public class ChestInteract : MonoBehaviour
 {
-    [Header("ПОДСКАЗКА")]
+    [Header("Подсказки")]
     public string openPrompt = "[ E ] Открыть";
     public string closePrompt = "[ E ] Закрыть";
     public int fontSize = 32;
     public Color promptColor = Color.white;
     [Range(0f, 1f)] public float promptPosY = 0.75f;
 
-    [Header("МОЖНО ЗАКРЫВАТЬ?")]
+    [Header("Поведение")]
     public bool canCloseAgain = true;
 
-    [Header("СОДЕРЖИМОЕ (необязательно)")]
+    [Header("Лут (необязательно)")]
     [TextArea] public string lootMessage = "";
     public Sprite lootIcon;
 
+    [Header("Радиус")]
+    public float interactRadius = 2f;
+
     private Chest chest;
-    private bool playerInZone = false;
     private GameObject promptObj;
     private Text promptText;
+    private Transform player;
 
     void Start()
     {
         chest = GetComponent<Chest>();
         if (chest == null)
         {
-            Debug.LogError("Нет компонента Chest на " + gameObject.name);
+            Debug.LogError("ChestInteract: на объекте нет компонента Chest!");
             enabled = false;
             return;
         }
-
-        CircleCollider2D col = GetComponent<CircleCollider2D>();
-        col.isTrigger = true;
-
-        Canvas canvas = FindFirstObjectByType<Canvas>();
-        if (canvas == null)
-        {
-            GameObject canvasObj = new GameObject("Canvas");
-            canvas = canvasObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 999;
-            canvasObj.AddComponent<CanvasScaler>();
-            canvasObj.AddComponent<GraphicRaycaster>();
-        }
-
-        promptObj = MakePrompt(canvas.transform);
-        promptObj.SetActive(false);
+        BuildUI();
     }
 
-    GameObject MakePrompt(Transform parent)
+    void BuildUI()
     {
-        GameObject go = new GameObject("ChestPrompt");
-        go.transform.SetParent(parent, false);
-        promptText = go.AddComponent<Text>();
+        GameObject canvasObj = new GameObject("ChestCanvas");
+        Canvas canvas = canvasObj.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 900;
+        canvasObj.AddComponent<CanvasScaler>();
+        canvasObj.AddComponent<GraphicRaycaster>();
+
+        promptObj = new GameObject("ChestPrompt");
+        promptObj.transform.SetParent(canvas.transform, false);
+        promptText = promptObj.AddComponent<Text>();
         promptText.text = openPrompt;
         promptText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         promptText.fontSize = fontSize;
         promptText.color = promptColor;
         promptText.alignment = TextAnchor.MiddleCenter;
         promptText.fontStyle = FontStyle.Bold;
-        RectTransform r = go.GetComponent<RectTransform>();
+        RectTransform r = promptObj.GetComponent<RectTransform>();
         r.anchorMin = new Vector2(0.05f, promptPosY);
         r.anchorMax = new Vector2(0.95f, promptPosY);
         r.pivot = new Vector2(0.5f, 0.5f);
         r.sizeDelta = new Vector2(0, 80);
         r.anchoredPosition = Vector2.zero;
-        return go;
+        promptObj.SetActive(false);
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    bool PlayerNear()
     {
-        if (other.CompareTag("Player") || other.transform.root.CompareTag("Player"))
-            playerInZone = true;
-    }
-
-    void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.CompareTag("Player") || other.transform.root.CompareTag("Player"))
-            playerInZone = false;
+        if (player == null || !player.gameObject.activeInHierarchy)
+        {
+            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            if (p == null) return false;
+            player = p.transform.root;
+        }
+        return Vector2.Distance(transform.position, player.position) <= interactRadius;
     }
 
     void Update()
     {
+        bool near = PlayerNear();
         bool dialogActive = DialogueManager.Instance != null && DialogueManager.Instance.IsActive;
 
-        if (playerInZone && !dialogActive)
+        if (near && !dialogActive)
         {
-            bool showPrompt = !chest.IsOpened || canCloseAgain;
-            promptObj.SetActive(showPrompt);
+            bool show = !chest.IsOpened || canCloseAgain;
+            promptObj.SetActive(show);
             promptText.text = chest.IsOpened ? closePrompt : openPrompt;
 
-            if (showPrompt && Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
+            if (show && Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
             {
                 if (!chest.IsOpened)
                 {
@@ -118,5 +111,11 @@ public class ChestInteract : MonoBehaviour
             }
         }
         else promptObj.SetActive(false);
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, interactRadius);
     }
 }

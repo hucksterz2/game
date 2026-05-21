@@ -7,13 +7,12 @@ public class DialogueManager : MonoBehaviour
 {
     public static DialogueManager Instance;
 
-    [Header("—корость печати (сек на букву)")]
     public float typeSpeed = 0.03f;
 
     private GameObject panel;
     private Image portraitImage;
     private Text bodyText;
-    private Text continueHint;
+    private Text hintText;
 
     private DialogueLine[] currentLines;
     private int currentIndex;
@@ -32,25 +31,27 @@ public class DialogueManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null) { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        Time.timeScale = 1f;
         BuildUI();
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     void BuildUI()
     {
-        Canvas canvas = FindFirstObjectByType<Canvas>();
-        if (canvas == null)
-        {
-            GameObject c = new GameObject("Canvas");
-            canvas = c.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 1000;
-            c.AddComponent<CanvasScaler>();
-            c.AddComponent<GraphicRaycaster>();
-        }
+        GameObject canvasObj = new GameObject("DialogueCanvas");
+        Canvas canvas = canvasObj.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 1500;
+        canvasObj.AddComponent<CanvasScaler>();
+        canvasObj.AddComponent<GraphicRaycaster>();
 
-        panel = new GameObject("DialoguePanel");
+        panel = new GameObject("Panel");
         panel.transform.SetParent(canvas.transform, false);
         Image bg = panel.AddComponent<Image>();
         bg.color = new Color(0, 0, 0, 0.85f);
@@ -70,7 +71,7 @@ public class DialogueManager : MonoBehaviour
         pir.sizeDelta = new Vector2(180, 0);
         pir.anchoredPosition = new Vector2(20, 0);
 
-        GameObject txt = new GameObject("BodyText");
+        GameObject txt = new GameObject("Body");
         txt.transform.SetParent(panel.transform, false);
         bodyText = txt.AddComponent<Text>();
         bodyText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -86,12 +87,12 @@ public class DialogueManager : MonoBehaviour
 
         GameObject hint = new GameObject("Hint");
         hint.transform.SetParent(panel.transform, false);
-        continueHint = hint.AddComponent<Text>();
-        continueHint.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        continueHint.fontSize = 18;
-        continueHint.color = new Color(1, 1, 1, 0.6f);
-        continueHint.text = "[ E Ч далее ]";
-        continueHint.alignment = TextAnchor.LowerRight;
+        hintText = hint.AddComponent<Text>();
+        hintText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        hintText.fontSize = 18;
+        hintText.color = new Color(1, 1, 1, 0.6f);
+        hintText.text = "[ E - далее ]";
+        hintText.alignment = TextAnchor.LowerRight;
         RectTransform hr = hint.GetComponent<RectTransform>();
         hr.anchorMin = new Vector2(0, 0);
         hr.anchorMax = new Vector2(1, 0);
@@ -106,9 +107,7 @@ public class DialogueManager : MonoBehaviour
     {
         DialogueLine[] dl = new DialogueLine[lines.Length];
         for (int i = 0; i < lines.Length; i++)
-        {
             dl[i] = new DialogueLine { portrait = portrait, text = lines[i] };
-        }
         StartDialogue(dl);
     }
 
@@ -135,7 +134,7 @@ public class DialogueManager : MonoBehaviour
         foreach (char c in fullLine)
         {
             bodyText.text += c;
-            yield return new WaitForSeconds(typeSpeed);
+            yield return new WaitForSecondsRealtime(typeSpeed);
         }
         isTyping = false;
     }
@@ -143,9 +142,9 @@ public class DialogueManager : MonoBehaviour
     void Update()
     {
         if (!dialogueActive) return;
-        bool advance = Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
+        if (Keyboard.current == null) return;
 
-        if (advance)
+        if (Keyboard.current.eKey.wasPressedThisFrame)
         {
             if (isTyping)
             {
