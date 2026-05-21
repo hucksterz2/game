@@ -8,7 +8,7 @@ public class BossHealthBarUI : MonoBehaviour
     public BossHealth bossHealth;
 
     [Header("Settings")]
-    public string bossName = "Big Bloated";
+    public string bossName = "Болотный Босс";
     public bool showOnStart = false;
 
     private Image fillImage;

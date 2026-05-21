@@ -16,6 +16,7 @@ public class BossAttack : MonoBehaviour
 
     [Header("Снаряд")]
     public Sprite projectileSprite;
+    public Sprite groundSpikeSprite;
     public float shootRange = 10f;
     public float shootCooldown = 3f;
 
@@ -50,6 +51,13 @@ public class BossAttack : MonoBehaviour
     private float stunTimer = 0f;
 
     private bool wasHitDuringAttack = false;
+    private int runAwayCount = 0;
+
+    private bool isPhase2Running = false;
+    private int phase2SpikeCount = 0;
+
+    private bool phase2MeleePhase = false;
+    private float phase2MeleeTimer = 0f;
 
     void Start()
     {
@@ -122,6 +130,44 @@ public class BossAttack : MonoBehaviour
             return;
         }
 
+        BossHealth health = GetComponent<BossHealth>();
+        bool isPhase2 = health != null && health.currentHP <= health.maxHP * 0.5f;
+        if (isPhase2)
+        {
+            if (isRunningAway) { RunAway(); return; }
+            if (isFlashing) { UpdateFlash(); return; }
+            if (PlayerIsOnBoss() && !isFlashing) { StartFlash(); return; }
+
+            if (!isAttacking && !isPhase2Running)
+            {
+                if (phase2MeleePhase)
+                {
+                    phase2MeleeTimer -= Time.deltaTime;
+                    float distP2 = HorizontalDistance();
+
+                    if (phase2MeleeTimer <= 0f)
+                    {
+                        phase2MeleePhase = false;
+                        StartCoroutine(Phase2Sequence());
+                    }
+                    else if (distP2 <= stopDistance + 2f)
+                    {
+                        StartAttack();
+                    }
+                    else
+                    {
+                        MoveToPlayer();
+                    }
+                }
+                else
+                {
+                    if (Time.time >= lastAttackTime + attackCooldown * 0.5f)
+                        StartCoroutine(Phase2Sequence());
+                }
+            }
+            return;
+        }
+
         if (isRunningAway)
         {
             RunAway();
@@ -171,6 +217,85 @@ public class BossAttack : MonoBehaviour
         }
     }
 
+    IEnumerator UndergroundAttack()
+    {
+        isAttacking = true;
+        lastAttackTime = Time.time;
+        animator.SetBool("isWalking", false);
+        animator.SetTrigger("UnderAttack");
+
+        yield return new WaitForSeconds(0.8f);
+
+        float bossX = transform.position.x;
+        float playerX = playerTransform.position.x;
+        float dir = playerX > bossX ? 1f : -1f;
+
+        for (int i = 0; i < 10; i++)
+        {
+            float spawnX = bossX + dir * (5.5f + i * 3.8f);
+            spawnX = ClampToArena(spawnX);
+            StartCoroutine(SpawnCreature(new Vector2(spawnX, fixedY), i * 0.1f));
+        }
+
+        yield return new WaitForSeconds(10 * 0.25f + 1.5f);
+        isAttacking = false;
+    }
+
+    IEnumerator SpawnCreature(Vector2 pos, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        GameObject c = new GameObject("GroundCreature");
+        c.transform.position = pos + Vector2.down * 2f;
+        c.transform.localScale = Vector3.one * 9f;
+
+        SpriteRenderer sr = c.AddComponent<SpriteRenderer>();
+        sr.sprite = groundSpikeSprite != null ? groundSpikeSprite : projectileSprite;
+        sr.sortingLayerName = "Decorations";
+        sr.sortingOrder = 0;
+
+        Rigidbody2D rb = c.AddComponent<Rigidbody2D>();
+        rb.gravityScale = 0f;
+
+        CircleCollider2D col = c.AddComponent<CircleCollider2D>();
+        col.isTrigger = true;
+        col.radius = 0.08f;
+        col.enabled = false;
+
+        float t = 0f;
+        Vector3 from = c.transform.position;
+        Vector3 to = (Vector3)pos + Vector3.up * 0f;
+        while (t < 0.35f)
+        {
+            if (c == null) yield break;
+            c.transform.position = Vector3.Lerp(from, to, t / 0.35f);
+            t += Time.deltaTime;
+            yield return null;
+        }
+
+        col.enabled = true;
+        rb.linearVelocity = Vector2.zero;
+        rb.bodyType = RigidbodyType2D.Kinematic;
+
+        SpikeHit spike = c.AddComponent<SpikeHit>();
+        spike.Init(playerHealth);
+
+        yield return new WaitForSeconds(0.3f);
+
+        float t2 = 0f;
+        Vector3 currentPos = c.transform.position;
+        Vector3 hidePos = currentPos + Vector3.down * 2f;
+        while (t2 < 0.4f)
+        {
+            if (c == null) yield break;
+            c.transform.position = Vector3.Lerp(currentPos, hidePos, t2 / 0.4f);
+            t2 += Time.deltaTime;
+            yield return null;
+        }
+
+        Destroy(c);
+    }
+
     void StandIdle()
     {
         animator.SetBool("isWalking", false);
@@ -217,7 +342,7 @@ public class BossAttack : MonoBehaviour
 
         CircleCollider2D col = proj.AddComponent<CircleCollider2D>();
         col.isTrigger = true;
-        col.radius = 0.3f;
+        col.radius = 0.001f;
         col.enabled = false;
 
         Rigidbody2D rb = proj.AddComponent<Rigidbody2D>();
@@ -264,13 +389,36 @@ public class BossAttack : MonoBehaviour
     {
         isRunningAway = true;
         isMoving = false;
-        float directionAway = playerTransform.position.x > transform.position.x ? -1f : 1f;
-        float target = transform.position.x + directionAway * 999f;
-        runAwayTargetX = ClampToArena(target);
+        runAwayCount++;
+
+        float distToLeft = transform.position.x - arenaMinX;
+        float distToRight = arenaMaxX - transform.position.x;
+        float directionAway = distToRight > distToLeft ? 1f : -1f;
+
+        if (runAwayCount % 2 == 0)
+        {
+            float raw = transform.position.x + directionAway * 999f;
+            runAwayTargetX = Mathf.Clamp(raw, arenaMinX + 5f, arenaMaxX - 5f);
+        }
+        else
+        {
+            float raw = transform.position.x + directionAway * (stopDistance + 7f);
+            runAwayTargetX = ClampToArena(raw);
+        }
     }
 
     void RunAway()
     {
+        if (runAwayCount % 2 == 0 && HorizontalDistance() <= stopDistance + 1f && !PlayerIsInAir())
+        {
+            if (Time.time >= lastAttackTime + 0.5f)
+            {
+                lastAttackTime = Time.time;
+                if (playerHealth != null)
+                    playerHealth.TakeDamage(3);
+            }
+        }
+
         float dir = runAwayTargetX > transform.position.x ? 1f : -1f;
         Vector3 pos = transform.position;
         pos.x += dir * runAwaySpeed * Time.deltaTime;
@@ -294,7 +442,7 @@ public class BossAttack : MonoBehaviour
         {
             animator.SetBool("isWalking", false);
             isRunningAway = false;
-            isMoving = true;
+            isMoving = false;
         }
     }
 
@@ -325,6 +473,7 @@ public class BossAttack : MonoBehaviour
         isAttacking = true;
         wasHitDuringAttack = false;
         animator.SetBool("isWalking", false);
+        spriteRenderer.flipX = playerTransform.position.x > transform.position.x;
         animator.SetTrigger("attack");
         StartCoroutine(DealDamageAtFrame(0.88f));
         Invoke(nameof(EndAttack), 1f);
@@ -364,5 +513,41 @@ public class BossAttack : MonoBehaviour
     void EndAttack()
     {
         isAttacking = false;
+    }
+
+    IEnumerator Phase2Sequence()
+    {
+        isPhase2Running = true;
+        lastAttackTime = Time.time;
+
+        float distToLeft = transform.position.x - arenaMinX;
+        float distToRight = arenaMaxX - transform.position.x;
+        float directionAway = distToRight > distToLeft ? 1f : -1f;
+        float raw = transform.position.x + directionAway * 999f;
+        runAwayTargetX = Mathf.Clamp(raw, arenaMinX + 5f, arenaMaxX - 5f);
+        isRunningAway = true;
+
+        while (isRunningAway)
+            yield return null;
+
+        for (int i = 0; i < 2; i++)
+        {
+            float dist = HorizontalDistance();
+            if (dist <= stopDistance + 2f)
+            {
+                StartAttack();
+                yield return new WaitForSeconds(1.2f);
+            }
+            else
+            {
+                yield return StartCoroutine(UndergroundAttack());
+                yield return new WaitForSeconds(0.2f);
+            }
+        }
+
+        isPhase2Running = false;
+        lastAttackTime = Time.time;
+        phase2MeleePhase = true;
+        phase2MeleeTimer = 5f;
     }
 }

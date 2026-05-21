@@ -24,6 +24,12 @@ public class BossHealth : MonoBehaviour
 
         currentHP = Mathf.Max(0, currentHP - amount);
 
+        if (animator != null)
+        {
+            bool isPhase2 = currentHP <= maxHP * 0.5f;
+            animator.SetBool("isPhase2", isPhase2);
+        }
+
         BossAttack attack = GetComponent<BossAttack>();
         if (attack != null) attack.NotifyHit();
 
