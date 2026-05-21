@@ -32,7 +32,7 @@ public class CoinManager : MonoBehaviour
         coinText.color = new Color(1f, 0.9f, 0.2f);
         coinText.alignment = TextAnchor.MiddleRight;
         coinText.fontStyle = FontStyle.Bold;
-        coinText.text = "Coins: " + Coins;
+        coinText.text = "Монетки: " + Coins;
         coinText.raycastTarget = false;
 
         var shadow = txt.AddComponent<Shadow>();
