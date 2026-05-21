@@ -20,6 +20,7 @@ public class BanditAI : MonoBehaviour
     public int   attackDamage      = 15;
     public float attackCooldown    = 1.2f;
     public float chaseSpeedMult    = 1.25f;
+    public float hurtDuration      = 0.45f;
 
     const int ANIM_IDLE   = 0;
     const int ANIM_ATTACK = 1;
@@ -31,6 +32,9 @@ public class BanditAI : MonoBehaviour
     private Animator    anim;
     private bool        isTurning;
     private bool        hasAnimStateParam;
+    private float       baseScaleX;
+    private float       baseScaleY;
+    private float       baseScaleZ;
 
     private bool  isStunned;
     private float stunTimer;
@@ -48,10 +52,23 @@ public class BanditAI : MonoBehaviour
     private Transform    player;
     private PlayerHealth playerHealth;
 
+    private float lastPosX;
+    private float stuckTimer;
+    private bool  touchingWall;
+
+    private float pullTimer;
+
+    private bool  isHurt;
+    private float hurtTimer;
+
     void Start()
     {
-        rb       = GetComponent<Rigidbody2D>();
-        startPos = transform.position;
+        rb         = GetComponent<Rigidbody2D>();
+        startPos   = transform.position;
+        lastPosX   = transform.position.x;
+        baseScaleX = Mathf.Abs(transform.localScale.x);
+        baseScaleY = transform.localScale.y;
+        baseScaleZ = transform.localScale.z;
 
         anim = GetComponent<Animator>();
         if (anim == null) anim = GetComponentInChildren<Animator>(true);
@@ -80,6 +97,8 @@ public class BanditAI : MonoBehaviour
 
         if (isAttacking) { attackAnimTimer -= Time.deltaTime; if (attackAnimTimer <= 0f) isAttacking = false; }
 
+        if (isHurt) { hurtTimer -= Time.deltaTime; if (hurtTimer <= 0f) isHurt = false; }
+
         if (isStunned)
         {
             stunTimer -= Time.deltaTime;
@@ -90,7 +109,14 @@ public class BanditAI : MonoBehaviour
             return;
         }
 
-        if (player != null && attackTimer <= 0f && !isAttacking)
+        if (pullTimer > 0f)
+        {
+            pullTimer -= Time.deltaTime;
+            SetAnim(ANIM_IDLE);
+            return;
+        }
+
+        if (player != null && attackTimer <= 0f && !isAttacking && !isHurt)
         {
             float hdist = Mathf.Abs(transform.position.x - player.position.x);
             float vdist = Mathf.Abs(transform.position.y - player.position.y);
@@ -104,8 +130,9 @@ public class BanditAI : MonoBehaviour
         if (isTurning)
         {
             float curSpd = isSlowed ? speed * 0.4f : speed;
-            rb.linearVelocity    = new Vector2(curSpd * direction, rb.linearVelocity.y);
-            transform.localScale = new Vector3(-direction, 1, 1);
+            rb.linearVelocity = new Vector2(curSpd * direction, rb.linearVelocity.y);
+            if (!isAttacking)
+                transform.localScale = new Vector3(-direction * baseScaleX, baseScaleY, baseScaleZ);
             SetAnim(ANIM_RUN);
             return;
         }
@@ -118,18 +145,27 @@ public class BanditAI : MonoBehaviour
 
         if (playerNearby)
         {
+            stuckTimer += Time.deltaTime;
+            if (stuckTimer >= 0.25f)
+            {
+                if (Mathf.Abs(transform.position.x - lastPosX) < 0.05f)
+                    rb.AddForce(Vector2.up * 5f, ForceMode2D.Impulse);
+                lastPosX   = transform.position.x;
+                stuckTimer = 0f;
+            }
+
             int chaseDir = player.position.x > transform.position.x ? 1 : -1;
             direction = chaseDir;
 
-            if (!CheckWallAhead())
-                rb.linearVelocity = new Vector2(currentSpeed * chaseSpeedMult * chaseDir, rb.linearVelocity.y);
-            else
-                rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
+            rb.linearVelocity = new Vector2(currentSpeed * chaseSpeedMult * chaseDir, rb.linearVelocity.y);
 
-            transform.localScale = new Vector3(-chaseDir, 1, 1);
+            if (!isAttacking)
+                transform.localScale = new Vector3(-chaseDir * baseScaleX, baseScaleY, baseScaleZ);
         }
         else
         {
+            stuckTimer = 0f;
+            lastPosX   = transform.position.x;
             turnCooldown = Mathf.Max(0f, turnCooldown - Time.deltaTime);
 
             bool groundAhead = (groundLayer == 0) || CheckGroundAhead();
@@ -145,7 +181,8 @@ public class BanditAI : MonoBehaviour
             { direction *= -1; isTurning = true; turnCooldown = 0.6f; Invoke(nameof(ResetTurn), 0.3f); }
 
             rb.linearVelocity = new Vector2(currentSpeed * direction, rb.linearVelocity.y);
-            transform.localScale = new Vector3(-direction, 1, 1);
+            if (!isAttacking)
+                transform.localScale = new Vector3(-direction * baseScaleX, baseScaleY, baseScaleZ);
         }
 
         SetAnim(isAttacking ? ANIM_ATTACK : ANIM_RUN);
@@ -168,10 +205,15 @@ public class BanditAI : MonoBehaviour
         if (player != null)
         {
             float facing = (player.position.x - transform.position.x) > 0f ? -1f : 1f;
-            transform.localScale = new Vector3(facing, 1, 1);
+            transform.localScale = new Vector3(facing * baseScaleX, baseScaleY, baseScaleZ);
         }
 
         SetAnim(ANIM_ATTACK);
+        if (anim != null)
+            foreach (var p in anim.parameters)
+                if (p.type == AnimatorControllerParameterType.Trigger &&
+                    (p.name == "Attack" || p.name == "attack"))
+                { anim.SetTrigger(p.name); break; }
 
         if (playerHealth == null && player != null)
         {
@@ -196,6 +238,9 @@ public class BanditAI : MonoBehaviour
 
     public void Stun(float duration)
     {
+        EnemyHealthBar bar = GetComponent<EnemyHealthBar>();
+        if (bar != null && bar.IsDead) return;
+
         isStunned = true;
         stunTimer = duration;
         rb.linearVelocity = new Vector2(0, rb.linearVelocity.y);
@@ -204,6 +249,9 @@ public class BanditAI : MonoBehaviour
 
     public void StunWithKnockback(float duration, Vector2 velocity)
     {
+        EnemyHealthBar bar = GetComponent<EnemyHealthBar>();
+        if (bar != null && bar.IsDead) return;
+
         isStunned      = true;
         stunTimer      = duration;
         knockbackTimer = 0.2f;
@@ -214,10 +262,51 @@ public class BanditAI : MonoBehaviour
     public void TakeDamage(int amount)
     {
         EnemyHealthBar bar = GetComponent<EnemyHealthBar>();
-        if (bar != null) bar.TakeDamage(amount);
+        if (bar != null && bar.IsDead) return;
 
-        BloodParticles.Spawn(transform.position + Vector3.up * 0.6f, amount, transform);
-        DamageNumber.Show(amount, transform.position + Vector3.up * 1.2f);
+        if (bar != null) bar.TakeDamage(amount);
+        else
+        {
+            if (!isAttacking) TriggerAnim("Hurt");
+        }
+
+        Vector3   pos    = transform.position + Vector3.up * 0.6f;
+        Transform parent = (bar != null && bar.IsDead) ? null : transform;
+        BloodParticles.Spawn(pos, amount, parent);
+        DamageNumber.Show(amount, pos + Vector3.up * 0.6f);
+    }
+
+    public void OnHurt()
+    {
+        if (!isAttacking)
+        {
+            isHurt    = true;
+            hurtTimer = hurtDuration;
+            TriggerAnim("Hurt");
+        }
+    }
+
+    public void OnDeath()
+    {
+        TriggerAnim("Die");
+        rb.linearVelocity = Vector2.zero;
+        rb.bodyType       = RigidbodyType2D.Kinematic;
+        isStunned         = true;
+        stunTimer         = 999f;
+    }
+
+    void TriggerAnim(string triggerName)
+    {
+        if (anim == null) return;
+        foreach (var p in anim.parameters)
+            if (p.type == AnimatorControllerParameterType.Trigger && p.name == triggerName)
+            { anim.SetTrigger(triggerName); return; }
+    }
+
+    public void Pull(Vector2 velocity)
+    {
+        pullTimer         = 0.15f;
+        rb.linearVelocity = velocity;
     }
 
     public void ApplySlow(float duration)
@@ -250,11 +339,31 @@ public class BanditAI : MonoBehaviour
         return hit.collider != null;
     }
 
+    void OnCollisionStay2D(Collision2D col)
+    {
+        if (col.gameObject.CompareTag("Player")) return;
+        foreach (ContactPoint2D c in col.contacts)
+        {
+            if (Mathf.Abs(c.normal.x) > 0.7f &&
+                Mathf.Sign(-c.normal.x) == Mathf.Sign(direction))
+            { touchingWall = true; return; }
+        }
+        touchingWall = false;
+    }
+
+    void OnCollisionExit2D(Collision2D col)
+    {
+        if (!col.gameObject.CompareTag("Player")) touchingWall = false;
+    }
+
     void OnCollisionEnter2D(Collision2D col)
     {
         if (isStunned) return;
         if (col.gameObject.CompareTag("Player"))
         {
+            PlayerController pc = col.gameObject.GetComponent<PlayerController>();
+            if (pc != null && pc.IsPlunging) return;
+
             isAttacking     = true;
             attackAnimTimer = 0.4f;
 

@@ -2,103 +2,97 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 
-[RequireComponent(typeof(CircleCollider2D))]
 public class NPCDialogue : MonoBehaviour
 {
     public enum Speaker { NPC, Player }
 
     [System.Serializable]
-    public class DialogueEntry
+    public class Entry
     {
         public Speaker speaker = Speaker.NPC;
         [TextArea(2, 5)] public string text;
     }
 
-    [Header("ПОРТРЕТЫ")]
+    [Header("Портреты")]
     public Sprite npcPortrait;
     public Sprite playerPortrait;
 
-    [Header("ДИАЛОГ (порядок и кто говорит)")]
-    public DialogueEntry[] dialogue;
+    [Header("Диалог")]
+    public Entry[] dialogue;
 
-    [Header("ПОДСКАЗКА")]
+    [Header("Подсказка")]
     public string promptText = "[ E ] Говорить";
     public int fontSize = 32;
     public Color promptColor = Color.white;
     [Range(0f, 1f)] public float promptPosY = 0.75f;
 
-    private bool playerInZone = false;
+    [Header("Радиус")]
+    public float interactRadius = 3f;
+
     private GameObject promptObj;
+    private Transform player;
 
     void Start()
     {
-        CircleCollider2D col = GetComponent<CircleCollider2D>();
-        col.isTrigger = true;
-
-        Canvas canvas = FindFirstObjectByType<Canvas>();
-        if (canvas == null)
-        {
-            GameObject canvasObj = new GameObject("Canvas");
-            canvas = canvasObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 999;
-            canvasObj.AddComponent<CanvasScaler>();
-            canvasObj.AddComponent<GraphicRaycaster>();
-        }
-
-        promptObj = MakePrompt(canvas.transform);
-        promptObj.SetActive(false);
+        BuildUI();
     }
 
-    GameObject MakePrompt(Transform parent)
+    void BuildUI()
     {
-        GameObject go = new GameObject("NPCPrompt");
-        go.transform.SetParent(parent, false);
-        Text t = go.AddComponent<Text>();
+        GameObject canvasObj = new GameObject("NPCCanvas");
+        Canvas canvas = canvasObj.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 900;
+        canvasObj.AddComponent<CanvasScaler>();
+        canvasObj.AddComponent<GraphicRaycaster>();
+
+        promptObj = new GameObject("NPCPrompt");
+        promptObj.transform.SetParent(canvas.transform, false);
+        Text t = promptObj.AddComponent<Text>();
         t.text = promptText;
         t.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         t.fontSize = fontSize;
         t.color = promptColor;
         t.alignment = TextAnchor.MiddleCenter;
         t.fontStyle = FontStyle.Bold;
-        RectTransform r = go.GetComponent<RectTransform>();
+        RectTransform r = promptObj.GetComponent<RectTransform>();
         r.anchorMin = new Vector2(0.05f, promptPosY);
         r.anchorMax = new Vector2(0.95f, promptPosY);
         r.pivot = new Vector2(0.5f, 0.5f);
         r.sizeDelta = new Vector2(0, 80);
         r.anchoredPosition = Vector2.zero;
-        return go;
+        promptObj.SetActive(false);
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    bool PlayerNear()
     {
-        if (other.CompareTag("Player") || other.transform.root.CompareTag("Player"))
-            playerInZone = true;
-    }
-
-    void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.CompareTag("Player") || other.transform.root.CompareTag("Player"))
-            playerInZone = false;
+        if (player == null)
+        {
+            GameObject p = GameObject.FindGameObjectWithTag("Player");
+            if (p == null) return false;
+            player = p.transform;
+        }
+        return Vector2.Distance(transform.position, player.position) <= interactRadius;
     }
 
     void Update()
     {
+        bool near = PlayerNear();
         bool dialogActive = DialogueManager.Instance != null && DialogueManager.Instance.IsActive;
 
-        if (playerInZone && !dialogActive)
+        if (near && !dialogActive)
         {
             promptObj.SetActive(true);
             if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
             {
                 promptObj.SetActive(false);
-                StartDialog();
+                OpenDialog();
             }
         }
         else promptObj.SetActive(false);
     }
 
-    void StartDialog()
+    void OpenDialog()
     {
         if (dialogue == null || dialogue.Length == 0) return;
 
@@ -118,5 +112,11 @@ public class NPCDialogue : MonoBehaviour
             go.AddComponent<DialogueManager>();
         }
         DialogueManager.Instance.StartDialogue(lines);
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, interactRadius);
     }
 }

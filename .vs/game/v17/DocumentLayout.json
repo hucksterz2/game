@@ -3,6 +3,14 @@
   "WorkspaceRootPath": "C:\\Users\\Admin\\game\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Admin\\game\\Assets\\PlayerHealth.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Assets\\PlayerHealth.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Admin\\game\\Assets\\PauseMenu.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Assets\\PauseMenu.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Admin\\game\\Assets\\TextMesh Pro\\Shaders\\TMP_SDF-Mobile.shader||{3B902123-F8A7-4915-9F01-361F908088D0}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Assets\\TextMesh Pro\\Shaders\\TMP_SDF-Mobile.shader||{3B902123-F8A7-4915-9F01-361F908088D0}"
     },
@@ -59,6 +67,30 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "PlayerHealth.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\game\\Assets\\PlayerHealth.cs",
+              "RelativeDocumentMoniker": "Assets\\PlayerHealth.cs",
+              "ToolTip": "C:\\Users\\Admin\\game\\Assets\\PlayerHealth.cs",
+              "RelativeToolTip": "Assets\\PlayerHealth.cs",
+              "ViewState": "AgIAAGwAAAAAAAAAAAAAAHYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T07:43:26.789Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "PauseMenu.cs",
+              "DocumentMoniker": "C:\\Users\\Admin\\game\\Assets\\PauseMenu.cs",
+              "RelativeDocumentMoniker": "Assets\\PauseMenu.cs",
+              "ToolTip": "C:\\Users\\Admin\\game\\Assets\\PauseMenu.cs",
+              "RelativeToolTip": "Assets\\PauseMenu.cs",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-14T16:20:44.129Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "TMP_SDF-Mobile.shader",
               "DocumentMoniker": "C:\\Users\\Admin\\game\\Assets\\TextMesh Pro\\Shaders\\TMP_SDF-Mobile.shader",
               "RelativeDocumentMoniker": "Assets\\TextMesh Pro\\Shaders\\TMP_SDF-Mobile.shader",
@@ -66,12 +98,11 @@
               "RelativeToolTip": "Assets\\TextMesh Pro\\Shaders\\TMP_SDF-Mobile.shader",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-05-14T15:15:36.993Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-14T15:15:36.993Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": "MainMenu.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\game\\Assets\\MainMenu.cs",
               "RelativeDocumentMoniker": "Assets\\MainMenu.cs",
@@ -79,12 +110,11 @@
               "RelativeToolTip": "Assets\\MainMenu.cs",
               "ViewState": "AgIAAAYAAAAAAAAAAAAAAA0AAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-14T14:27:25.628Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-14T14:27:25.628Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 4,
               "Title": "ChestInteract.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\game\\Assets\\ChestInteract.cs",
               "RelativeDocumentMoniker": "Assets\\ChestInteract.cs",
@@ -92,12 +122,11 @@
               "RelativeToolTip": "Assets\\ChestInteract.cs",
               "ViewState": "AgIAAFUAAAAAAAAAAAAAAFwAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-11T05:30:27.423Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-11T05:30:27.423Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 8,
               "Title": "NPCDialogue.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\game\\Assets\\NPCDialogue.cs",
               "RelativeDocumentMoniker": "Assets\\NPCDialogue.cs",
@@ -109,7 +138,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 9,
               "Title": "DialogueTrigger.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\game\\Assets\\DialogueTrigger.cs",
               "RelativeDocumentMoniker": "Assets\\DialogueTrigger.cs",
@@ -121,7 +150,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 7,
               "Title": "DialogueManager.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\game\\Assets\\DialogueManager.cs",
               "RelativeDocumentMoniker": "Assets\\DialogueManager.cs",
@@ -133,7 +162,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 6,
               "Title": "BanditAI.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\game\\Assets\\BanditAI.cs",
               "RelativeDocumentMoniker": "Assets\\BanditAI.cs",
@@ -145,7 +174,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 5,
               "Title": "Parallax.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\game\\Assets\\Parallax.cs",
               "RelativeDocumentMoniker": "Assets\\Parallax.cs",
@@ -157,7 +186,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 11,
               "Title": "PlayerController.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\game\\Assets\\PlayerController.cs",
               "RelativeDocumentMoniker": "Assets\\PlayerController.cs",
@@ -169,7 +198,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 10,
               "Title": "SightInteract.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\game\\Assets\\SightInteract.cs",
               "RelativeDocumentMoniker": "Assets\\SightInteract.cs",
@@ -181,7 +210,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 12,
               "Title": "CameraFollow.cs",
               "DocumentMoniker": "C:\\Users\\Admin\\game\\Assets\\CameraFollow.cs",
               "RelativeDocumentMoniker": "Assets\\CameraFollow.cs",

@@ -51,6 +51,9 @@ public class GrapplingHook : MonoBehaviour
     private bool ropeBroken;
     private float cooldownTimer;
 
+    private float swingMomentum;
+    private float intendedRopeLength;
+
     public static bool isSwinging;
 
     private GameObject brokenPanel;
@@ -58,6 +61,7 @@ public class GrapplingHook : MonoBehaviour
 
     void Awake()
     {
+        isSwinging = false;
         foreach (var lr in GetComponents<LineRenderer>())
         {
             lr.positionCount = 2;
@@ -226,15 +230,17 @@ public class GrapplingHook : MonoBehaviour
     {
         if (joint == null) return;
 
-        DrawRope(transform.position, grapplePoint, joint.distance);
-
         bool pullIn = Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed;
         bool letOut = Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed;
 
         if (pullIn)
-            joint.distance = Mathf.Max(minRopeLength, joint.distance - pullSpeed * Time.deltaTime);
+            intendedRopeLength = Mathf.Max(minRopeLength, intendedRopeLength - pullSpeed * Time.deltaTime);
         else if (letOut)
-            joint.distance = Mathf.Min(maxRopeLength, joint.distance + pullSpeed * Time.deltaTime);
+            intendedRopeLength = Mathf.Min(maxRopeLength, intendedRopeLength + pullSpeed * Time.deltaTime);
+
+        joint.distance = intendedRopeLength;
+
+        DrawRope(transform.position, grapplePoint, intendedRopeLength);
 
         bool isStuck = pullIn && IsOnGround() && rb.linearVelocity.magnitude < 0.15f;
         if (isStuck)
@@ -267,12 +273,22 @@ public class GrapplingHook : MonoBehaviour
 
         if (swingInput != 0f)
         {
-            Vector2 toAnchor = ((Vector2)grapplePoint - (Vector2)transform.position).normalized;
-            Vector2 tangent  = new Vector2(toAnchor.y, -toAnchor.x);
+            swingMomentum = Mathf.MoveTowards(swingMomentum, 1f, Time.deltaTime * 1.5f);
 
-            float velInDir = Vector2.Dot(rb.linearVelocity, tangent) * swingInput;
-            float factor   = Mathf.Clamp01(1f - velInDir / maxSwingSpeed);
-            rb.AddForce(tangent * swingInput * swingForce * factor);
+            Vector2 toAnchor  = ((Vector2)grapplePoint - (Vector2)transform.position).normalized;
+            Vector2 tangent   = new Vector2(toAnchor.y, -toAnchor.x);
+            float   velInDir  = Vector2.Dot(rb.linearVelocity, tangent);
+            float   curSpeed  = Mathf.Abs(velInDir);
+            float   ratio     = curSpeed / maxSwingSpeed;
+            float   speedFact = Mathf.Clamp01(1f - ratio * ratio);
+            bool    canPump   = swingInput * velInDir >= -0.3f;
+
+            if (canPump)
+                rb.AddForce(tangent * swingInput * swingForce * speedFact * swingMomentum);
+        }
+        else
+        {
+            swingMomentum = Mathf.MoveTowards(swingMomentum, 0f, Time.deltaTime * 3f);
         }
     }
 
@@ -295,17 +311,41 @@ public class GrapplingHook : MonoBehaviour
 
     void DrawRope(Vector2 start, Vector2 end, float ropeLen)
     {
-        line.positionCount = 2;
-        line.SetPosition(0, start);
-        line.SetPosition(1, end);
+        float actualDist = Vector2.Distance(start, end);
+        float slack      = Mathf.Max(0f, ropeLen - actualDist);
+
+        if (slack < 0.15f)
+        {
+            line.positionCount = 2;
+            line.SetPosition(0, start);
+            line.SetPosition(1, end);
+        }
+        else
+        {
+            const int segs = 14;
+            line.positionCount = segs + 1;
+            float sagAmount = Mathf.Clamp(slack * 0.45f, 0f, 3.5f);
+            for (int i = 0; i <= segs; i++)
+            {
+                float t      = (float)i / segs;
+                Vector2 flat = Vector2.Lerp(start, end, t);
+                float   sag  = 4f * t * (1f - t) * sagAmount;
+                line.SetPosition(i, new Vector3(flat.x, flat.y - sag, 0f));
+            }
+        }
+
         if (!line.enabled) line.enabled = true;
     }
 
     void UpdateEnemyGrapple()
     {
-        if (enemyRb == null) { StopGrapple(); return; }
+        if (enemyAI != null && !enemyAI.gameObject) enemyAI = null;
+        if (enemyRb != null && !enemyRb.gameObject) enemyRb = null;
+        if (enemyRb == null && enemyAI == null) { StopGrapple(); return; }
 
-        grapplePoint = enemyRb.position;
+        grapplePoint = enemyAI  != null ? (Vector2)enemyAI.transform.position :
+                       enemyRb != null ? enemyRb.position : grapplePoint;
+
         float ropeDist = joint != null
             ? joint.distance
             : Vector2.Distance(transform.position, grapplePoint);
@@ -315,12 +355,15 @@ public class GrapplingHook : MonoBehaviour
 
         if (!isHeavyEnemy)
         {
-            Vector2 dir = ((Vector2)transform.position - enemyRb.position).normalized;
-            enemyRb.linearVelocity = dir * enemyPullSpeed;
+            Vector2 dir = ((Vector2)transform.position - grapplePoint).normalized;
+            if (enemyAI != null)
+                enemyAI.Pull(dir * enemyPullSpeed);
+            else if (enemyRb != null)
+                enemyRb.linearVelocity = dir * enemyPullSpeed;
         }
         else if (joint != null)
         {
-            joint.connectedAnchor = enemyRb.position;
+            if (enemyRb != null) joint.connectedAnchor = enemyRb.position;
 
             bool pullIn = Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed;
             if (pullIn)
@@ -332,11 +375,22 @@ public class GrapplingHook : MonoBehaviour
 
             if (swingInput != 0f)
             {
-                Vector2 toAnchor = (grapplePoint - (Vector2)transform.position).normalized;
-                Vector2 tangent  = new Vector2(toAnchor.y, -toAnchor.x);
-                float velInDir   = Vector2.Dot(rb.linearVelocity, tangent) * swingInput;
-                float factor     = Mathf.Clamp01(1f - velInDir / maxSwingSpeed);
-                rb.AddForce(tangent * swingInput * swingForce * factor);
+                swingMomentum = Mathf.MoveTowards(swingMomentum, 1f, Time.deltaTime * 1.5f);
+
+                Vector2 toAnchor  = (grapplePoint - (Vector2)transform.position).normalized;
+                Vector2 tangent   = new Vector2(toAnchor.y, -toAnchor.x);
+                float   velInDir  = Vector2.Dot(rb.linearVelocity, tangent);
+                float   curSpeed  = Mathf.Abs(velInDir);
+                float   ratio     = curSpeed / maxSwingSpeed;
+                float   speedFact = Mathf.Clamp01(1f - ratio * ratio);
+                bool    canPump   = swingInput * velInDir >= -0.3f;
+
+                if (canPump)
+                    rb.AddForce(tangent * swingInput * swingForce * speedFact * swingMomentum);
+            }
+            else
+            {
+                swingMomentum = Mathf.MoveTowards(swingMomentum, 0f, Time.deltaTime * 3f);
             }
         }
 
@@ -375,14 +429,18 @@ public class GrapplingHook : MonoBehaviour
         RaycastHit2D hit   = Physics2D.Raycast(transform.position, dir, maxDistance, grappleLayer);
         if (hit.collider == null) return;
 
-        BanditAI       bandit = hit.collider.GetComponentInParent<BanditAI>();
-        EnemyHealthBar hpBar  = hit.collider.GetComponentInParent<EnemyHealthBar>();
+        Transform hitRoot = hit.collider.transform.root;
+        BanditAI       bandit = hit.collider.GetComponentInParent<BanditAI>()
+                             ?? hitRoot.GetComponentInChildren<BanditAI>();
+        EnemyHealthBar hpBar  = hit.collider.GetComponentInParent<EnemyHealthBar>()
+                             ?? hitRoot.GetComponentInChildren<EnemyHealthBar>();
         if (hpBar == null && bandit != null)
             hpBar = bandit.GetComponent<EnemyHealthBar>();
 
         if (bandit != null || hpBar != null)
         {
-            enemyRb           = hit.collider.GetComponentInParent<Rigidbody2D>();
+            enemyRb           = hit.collider.GetComponentInParent<Rigidbody2D>()
+                             ?? hitRoot.GetComponentInChildren<Rigidbody2D>();
             enemyAI           = bandit;
             enemyHealthBar    = hpBar;
             impactDealt       = false;
@@ -391,7 +449,7 @@ public class GrapplingHook : MonoBehaviour
             isGrappling       = true;
             grapplePoint      = hit.point;
 
-            isHeavyEnemy = enemyRb == null || enemyRb.mass >= enemyMassThreshold;
+            isHeavyEnemy = bandit == null && (enemyRb == null || enemyRb.mass >= enemyMassThreshold);
             isSwinging   = isHeavyEnemy;
 
             if (isHeavyEnemy)
@@ -416,7 +474,8 @@ public class GrapplingHook : MonoBehaviour
             joint.enableCollision       = true;
             joint.maxDistanceOnly       = true;
             joint.connectedAnchor       = grapplePoint;
-            joint.distance = Vector2.Distance(transform.position, grapplePoint);
+            joint.distance     = Vector2.Distance(transform.position, grapplePoint);
+            intendedRopeLength = joint.distance;
 
             isSwinging = true;
             SpawnHitParticles(hit);
@@ -444,10 +503,14 @@ public class GrapplingHook : MonoBehaviour
         enemyAI          = null;
         enemyHealthBar   = null;
         strainTimer      = 0f;
+        swingMomentum    = 0f;
         line.positionCount = 0;
         line.enabled     = false;
         line.startColor  = Color.black;
         line.endColor    = Color.black;
-        if (joint != null) Destroy(joint);
+        if (joint != null) { Destroy(joint); joint = null; }
+        intendedRopeLength = 0f;
+        if (rb != null && rb.linearVelocity.magnitude > 10f)
+            rb.linearVelocity = rb.linearVelocity.normalized * 10f;
     }
 }

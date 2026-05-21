@@ -8,7 +8,7 @@ public class PlayerController : MonoBehaviour
     public float speed = 5f;
 
     [Header("Прыжок")]
-    public float jumpForce = 10f;
+    public float jumpForce = 20f;
     public int maxJumps = 2;
     public float groundCheckRadius = 0.2f;
     public Transform groundCheck;
@@ -37,16 +37,25 @@ public class PlayerController : MonoBehaviour
     public LayerMask ladderLayer;
 
     [Header("Комбо-атака (F)")]
-    public float attackRange    = 1.4f;
-    public float attackCooldown = 0.25f;
-    public float comboWindow    = 0.8f;
-    public int[] comboDamage    = { 8, 13, 20 };
+    public float   attackRange    = 1.4f;
+    public float   attackCooldown = 0.25f;
+    public float   comboWindow    = 0.8f;
+    public int[]   comboDamage    = { 8, 13, 20 };
+    public float[] comboRangeX    = { 2.7f, 1.8f, 2.6f };
+    public float[] comboRangeY    = { 1.0f, 1.8f, 1.2f };
+    public float[] comboOffsetX   = { 1.5f, 0.9f, 1.2f };
+    public float[] comboOffsetY   = { 0.0f, -0.1f, 0.0f };
 
     [Header("Блок / Парирование (Q)")]
     public float blockDamageReduction = 0.5f;
     public float parryWindow          = 0.2f;
     public float parryStunDuration    = 1.5f;
     public float parryCooldown        = 0.8f;
+    public int   parryReflectDamage   = 20;
+
+    [Header("Урон от падения")]
+    public float fallDamageThreshold  = 17f;
+    public float fallDamageMultiplier = 1.5f;
 
     [Header("Атака сверху (E)")]
     public int   plungeDamage     = 25;
@@ -59,6 +68,7 @@ public class PlayerController : MonoBehaviour
     public bool ParryActive     { get; private set; }
     public bool IsDashInvincible{ get; private set; }
     public bool IsDead          { get; set; }
+    public bool IsPlunging      => isPlunging || plungeGraceTimer > 0f;
 
     private Rigidbody2D rb;
     private Animator    anim;
@@ -86,18 +96,24 @@ public class PlayerController : MonoBehaviour
     private float parryTimer;
     private float parryCooldownTimer;
 
-    private bool isTouchingWall, isWallSliding;
+    private bool isTouchingWall, isWallSliding, wasTouchingWall;
     private int  wallDirection;
 
     private bool       isPlunging;
     private bool       plungeAnimTriggered;
     private float      plungeStartDist;
     private float      plungeTimer;
+    private float      plungeGraceTimer;
     private BanditAI   plungeTarget;
     private GameObject plungePromptGO;
 
+    private float stuckTimer;
+    private float lastInputX;
+
     private RageSystem rageSystem;
     private SpriteRenderer playerSprite;
+    private float startupDelay = 0.15f;
+    private float maxFallVelocity;
 
     void Start()
     {
@@ -119,6 +135,7 @@ public class PlayerController : MonoBehaviour
 
         rageSystem   = GetComponent<RageSystem>() ?? GetComponentInParent<RageSystem>();
         playerSprite = GetComponentInChildren<SpriteRenderer>();
+        rb.linearVelocity = Vector2.zero;
     }
 
     void IgnoreCeilings()
@@ -169,9 +186,47 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (IsDead) return;
+        if (IsDead)
+        {
+            isPlunging       = false;
+            plungeGraceTimer = 0f;
+            plungeTarget     = null;
+            return;
+        }
+        if (startupDelay > 0f) { startupDelay -= Time.deltaTime; rb.linearVelocity = Vector2.zero; return; }
+
+        float dbgInputX = 0f;
+        if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed)  dbgInputX = -1f;
+        if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) dbgInputX =  1f;
+
+        if (dbgInputX != 0f && Mathf.Abs(transform.position.x - lastInputX) < 0.03f)
+        {
+            stuckTimer += Time.deltaTime;
+            if (stuckTimer > 0.4f)
+            {
+                isPlunging          = false;
+                plungeAnimTriggered = false;
+                plungeGraceTimer    = 0f;
+                plungeTarget        = null;
+                isDashing           = false;
+                isClimbing          = false;
+                isOnLadder          = false;
+                ShowPlungePrompt(false);
+                if (rb.gravityScale == 0f) rb.gravityScale = originalGravityScale;
+                GrapplingHook.isSwinging = false;
+                RestoreCeilings();
+                stuckTimer = 0f;
+            }
+        }
+        else
+        {
+            stuckTimer = 0f;
+        }
+        lastInputX = transform.position.x;
+
         CheckLadder();
 
+        if (plungeGraceTimer > 0f) plungeGraceTimer -= Time.deltaTime;
         attackCooldownTimer -= Time.deltaTime;
         if (comboResetTimer > 0f)
         {
@@ -196,8 +251,28 @@ public class PlayerController : MonoBehaviour
 
         bool grounded = IsGrounded();
 
-        if (grounded) { coyoteTimer = coyoteTime; if (!wasGrounded) jumpsLeft = maxJumps; }
-        else          coyoteTimer -= Time.deltaTime;
+        if (!grounded && rb.linearVelocity.y < maxFallVelocity)
+            maxFallVelocity = rb.linearVelocity.y;
+
+        if (grounded)
+        {
+            coyoteTimer = coyoteTime;
+            if (!wasGrounded)
+            {
+                jumpsLeft = maxJumps;
+                if (maxFallVelocity < -fallDamageThreshold && !isPlunging)
+                {
+                    int dmg = Mathf.RoundToInt((-maxFallVelocity - fallDamageThreshold) * fallDamageMultiplier);
+                    PlayerHealth ph = GetComponent<PlayerHealth>() ?? GetComponentInParent<PlayerHealth>();
+                    if (ph != null) ph.TakeDamage(dmg);
+                }
+                maxFallVelocity = 0f;
+            }
+        }
+        else
+        {
+            coyoteTimer -= Time.deltaTime;
+        }
         wasGrounded = grounded;
 
         if (Keyboard.current.spaceKey.wasPressedThisFrame) jumpBufferTimer = jumpBufferTime;
@@ -206,6 +281,8 @@ public class PlayerController : MonoBehaviour
         isTouchingWall = IsTouchingWall(out wallDirection);
         isWallSliding  = isTouchingWall && !grounded && rb.linearVelocity.y < 0;
         if (isWallSliding) rb.linearVelocity = new Vector2(rb.linearVelocity.x, -wallSlideSpeed);
+        if (isTouchingWall && !wasTouchingWall && !grounded) jumpsLeft = maxJumps;
+        wasTouchingWall = isTouchingWall;
 
         dashCooldownTimer -= Time.deltaTime;
         if (Keyboard.current.leftShiftKey.wasPressedThisFrame && dashCooldownTimer <= 0 && !isDashing && !isPlunging)
@@ -230,9 +307,16 @@ public class PlayerController : MonoBehaviour
 
         if (isPlunging)
         {
-            if (plungeTarget == null) { isPlunging = false; plungeAnimTriggered = false; ShowPlungePrompt(false); }
+            if (plungeTarget == null)
+            {
+                isPlunging = false;
+                plungeAnimTriggered = false;
+                ShowPlungePrompt(false);
+                if (rb.gravityScale == 0f) rb.gravityScale = originalGravityScale;
+            }
             else
             {
+                float yVelBefore = rb.linearVelocity.y;
                 plungeTimer += Time.deltaTime;
                 float dist = Vector2.Distance(transform.position, plungeTarget.transform.position);
 
@@ -245,17 +329,26 @@ public class PlayerController : MonoBehaviour
                     SafeSetTrigger("Plunge");
                 }
 
-                if (plungeTimer > 0.1f && (dist < 0.75f || grounded)) FinishPlunge();
+                bool reachedTarget  = dist < 0.75f;
+                bool stoppedFalling = plungeTimer > 0.15f && Mathf.Abs(yVelBefore) < 1f;
+                bool timedOut       = plungeTimer > 1.5f;
+
+                if (plungeTimer > 0.1f && (reachedTarget || grounded || stoppedFalling || timedOut))
+                    FinishPlunge();
             }
             return;
         }
 
         if (GrapplingHook.isSwinging)
         {
-            if (rb.linearVelocity.x > 0.2f)       transform.localScale = new Vector3(-baseScaleX, baseScaleY, baseScaleZ);
-            else if (rb.linearVelocity.x < -0.2f)  transform.localScale = new Vector3( baseScaleX, baseScaleY, baseScaleZ);
-            if (anim != null) anim.SetFloat("MoveSpeed", 1f);
-            return;
+            if (isClimbing) { isClimbing = false; rb.gravityScale = originalGravityScale; RestoreCeilings(); }
+            if (!grounded)
+            {
+                if (rb.linearVelocity.x > 0.2f)       transform.localScale = new Vector3(-baseScaleX, baseScaleY, baseScaleZ);
+                else if (rb.linearVelocity.x < -0.2f)  transform.localScale = new Vector3( baseScaleX, baseScaleY, baseScaleZ);
+                if (anim != null) anim.SetFloat("MoveSpeed", 1f);
+                return;
+            }
         }
 
         if (!grounded && rb.linearVelocity.y < -1.5f && plungeTarget == null)
@@ -278,10 +371,11 @@ public class PlayerController : MonoBehaviour
         if (plungeTarget != null && Keyboard.current.eKey.wasPressedThisFrame)
         {
             isPlunging          = true;
-            plungeAnimTriggered = false;
+            plungeAnimTriggered = true;
             plungeTimer         = 0f;
             plungeStartDist = Vector2.Distance(transform.position, plungeTarget.transform.position);
             if (plungeStartDist < 0.1f) plungeStartDist = 3f;
+            SafeSetTrigger("Plunge");
             ShowPlungePrompt(false);
             return;
         }
@@ -320,8 +414,11 @@ public class PlayerController : MonoBehaviour
         rb.linearVelocity = new Vector2(moveInput * effectiveSpeed, rb.linearVelocity.y);
 
         if (anim != null) anim.SetFloat("MoveSpeed", Mathf.Abs(moveInput));
-        if (moveInput > 0) transform.localScale = new Vector3(-baseScaleX, baseScaleY, baseScaleZ);
-        if (moveInput < 0) transform.localScale = new Vector3( baseScaleX, baseScaleY, baseScaleZ);
+        if (attackCooldownTimer <= 0f)
+        {
+            if (moveInput > 0) transform.localScale = new Vector3(-baseScaleX, baseScaleY, baseScaleZ);
+            if (moveInput < 0) transform.localScale = new Vector3( baseScaleX, baseScaleY, baseScaleZ);
+        }
 
         bool canJump = coyoteTimer > 0 || jumpsLeft > 0;
         if (jumpBufferTimer > 0 && canJump)
@@ -335,10 +432,13 @@ public class PlayerController : MonoBehaviour
     void FinishPlunge()
     {
         isPlunging          = false;
+        plungeGraceTimer    = 0.55f;
         plungeAnimTriggered = false;
         BanditAI target = plungeTarget;
         plungeTarget = null;
         ShowPlungePrompt(false);
+
+        if (rb.gravityScale == 0f) rb.gravityScale = originalGravityScale;
 
         if (target != null)
         {
@@ -346,6 +446,13 @@ public class PlayerController : MonoBehaviour
             if (bar != null) bar.TakeDamage(plungeDamage);
             else             target.TakeDamage(plungeDamage);
             target.StunWithKnockback(0.5f, new Vector2(0f, -2f));
+
+            if (playerCol != null)
+                foreach (var ec in target.GetComponentsInChildren<Collider2D>(true))
+                {
+                    Physics2D.IgnoreCollision(playerCol, ec, true);
+                    StartCoroutine(RestoreCollision(playerCol, ec, 1.5f));
+                }
         }
 
         float bounceX = 0f;
@@ -398,14 +505,14 @@ public class PlayerController : MonoBehaviour
             canvas.renderMode = RenderMode.WorldSpace;
             plungePromptGO.transform.localScale = Vector3.one * 0.01f;
             var rt = plungePromptGO.GetComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(120f, 26f);
+            rt.sizeDelta = new Vector2(200f, 40f);
 
             var textGO = new GameObject("Label");
             textGO.transform.SetParent(plungePromptGO.transform, false);
             var text = textGO.AddComponent<Text>();
             text.text      = "[E]  Удар сверху";
             text.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize  = 20;
+            text.fontSize  = 34;
             text.color     = new Color(1f, 0.9f, 0.1f);
             text.fontStyle = FontStyle.Bold;
             text.alignment = TextAnchor.MiddleCenter;
@@ -423,7 +530,7 @@ public class PlayerController : MonoBehaviour
 
         if (plungePromptGO != null)
         {
-            plungePromptGO.transform.position = transform.position + Vector3.up * 1.9f;
+            plungePromptGO.transform.position = transform.position + Vector3.up * 3.2f;
             if (Camera.main != null)
                 plungePromptGO.transform.rotation = Camera.main.transform.rotation;
         }
@@ -434,12 +541,17 @@ public class PlayerController : MonoBehaviour
         string[] triggers = { "Attack1", "Attack2", "Attack3" };
         SafeSetTrigger(triggers[comboStep]);
 
-        float dir = transform.localScale.x < 0 ? 1f : -1f;
-        float clampedRange = Mathf.Clamp(attackRange, 0.3f, 2.5f);
-        Vector2 hitCenter  = (Vector2)transform.position + new Vector2(dir * 0.8f, 0.1f);
-        const float hardMaxReach = 2.8f;
+        float dir  = transform.localScale.x < 0 ? 1f : -1f;
+        int   step = Mathf.Clamp(comboStep, 0, comboDamage.Length - 1);
+        float rX   = step < comboRangeX.Length  ? comboRangeX[step]  : attackRange;
+        float rY   = step < comboRangeY.Length  ? comboRangeY[step]  : 1.4f;
+        float oX   = step < comboOffsetX.Length ? comboOffsetX[step] : 0.8f;
+        float oY   = step < comboOffsetY.Length ? comboOffsetY[step] : 0.1f;
 
-        Collider2D[] hits = Physics2D.OverlapBoxAll(hitCenter, new Vector2(clampedRange, 1.4f), 0f);
+        Vector2 hitCenter    = (Vector2)transform.position + new Vector2(dir * oX, oY);
+        const float hardMaxReach = 3.5f;
+
+        Collider2D[] hits = Physics2D.OverlapBoxAll(hitCenter, new Vector2(rX, rY), 0f);
 
         float rageMult = rageSystem != null ? rageSystem.DamageMultiplier : 1f;
         int  damage  = Mathf.RoundToInt(comboDamage[Mathf.Clamp(comboStep, 0, comboDamage.Length - 1)] * rageMult);
@@ -478,8 +590,13 @@ public class PlayerController : MonoBehaviour
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 2.5f);
         foreach (var col in hits)
         {
-            BanditAI b = col.GetComponentInParent<BanditAI>();
-            if (b != null) b.Stun(parryStunDuration);
+            BanditAI b = col.GetComponentInParent<BanditAI>()
+                      ?? col.transform.root.GetComponentInChildren<BanditAI>();
+            if (b != null)
+            {
+                b.Stun(parryStunDuration);
+                b.TakeDamage(parryReflectDamage);
+            }
         }
     }
 
@@ -494,6 +611,13 @@ public class PlayerController : MonoBehaviour
         }
         if (playerSprite != null) playerSprite.enabled = true;
         IsDashInvincible = false;
+    }
+
+    void OnCollisionEnter2D(Collision2D col)
+    {
+        if (IsDead || IsGrounded()) return;
+        if (((1 << col.gameObject.layer) & groundLayer.value) != 0)
+            jumpsLeft = maxJumps;
     }
 
     void SafeSetTrigger(string name, string fallback = "Attack")
