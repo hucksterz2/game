@@ -3,16 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\user\\2D_game\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|c:\\users\\user\\2d_game\\assets\\bloodparticles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\bloodparticles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|c:\\users\\user\\2d_game\\assets\\banditai.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\banditai.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|c:\\users\\user\\2d_game\\assets\\playerhealth.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\playerhealth.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|c:\\users\\user\\2d_game\\assets\\grappinglinehook.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\grappinglinehook.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|c:\\users\\user\\2d_game\\assets\\banditai.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|solutionrelative:assets\\banditai.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{B4CD19DA-EE08-5225-FB19-1D0DFA4113DD}|Assembly-CSharp.csproj|c:\\users\\user\\2d_game\\assets\\bandits - pixel art\\demo\\bandit.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -38,7 +42,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Bookmark",
@@ -46,7 +50,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 0,
+              "Title": "BloodParticles.cs",
+              "DocumentMoniker": "C:\\Users\\user\\2D_game\\Assets\\BloodParticles.cs",
+              "RelativeDocumentMoniker": "Assets\\BloodParticles.cs",
+              "ToolTip": "C:\\Users\\user\\2D_game\\Assets\\BloodParticles.cs",
+              "RelativeToolTip": "Assets\\BloodParticles.cs",
+              "ViewState": "AgIAADYAAAAAAAAAAAAYwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-21T17:07:47.616Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
               "Title": "HPBarUI.cs",
               "DocumentMoniker": "C:\\Users\\user\\2D_game\\Assets\\HPBarUI.cs",
               "RelativeDocumentMoniker": "Assets\\HPBarUI.cs",
@@ -54,12 +71,11 @@
               "RelativeToolTip": "Assets\\HPBarUI.cs",
               "ViewState": "AgIAAE4AAAAAAAAAAAAYwEMAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-03T13:22:57.016Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-03T13:22:57.016Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "PlayerController.cs",
               "DocumentMoniker": "C:\\Users\\user\\2D_game\\Assets\\PlayerController.cs",
               "RelativeDocumentMoniker": "Assets\\PlayerController.cs",
@@ -67,25 +83,23 @@
               "RelativeToolTip": "Assets\\PlayerController.cs",
               "ViewState": "AgIAANoBAAAAAAAAAAAAAG8AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-03T07:20:08.852Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-03T07:20:08.852Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "PlayerHealth.cs",
               "DocumentMoniker": "C:\\Users\\user\\2D_game\\Assets\\PlayerHealth.cs",
               "RelativeDocumentMoniker": "Assets\\PlayerHealth.cs",
               "ToolTip": "C:\\Users\\user\\2D_game\\Assets\\PlayerHealth.cs",
               "RelativeToolTip": "Assets\\PlayerHealth.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAACkAAAAJAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACkAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-03T15:47:08.677Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-03T15:47:08.677Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "EnemyHealthBar.cs",
               "DocumentMoniker": "C:\\Users\\user\\2D_game\\Assets\\EnemyHealthBar.cs",
               "RelativeDocumentMoniker": "Assets\\EnemyHealthBar.cs",
@@ -93,12 +107,11 @@
               "RelativeToolTip": "Assets\\EnemyHealthBar.cs",
               "ViewState": "AgIAACwAAAAAAAAAAAAQwFIAAAAFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-03T15:41:28.071Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-03T15:41:28.071Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "Bandit.cs",
               "DocumentMoniker": "C:\\Users\\user\\2D_game\\Assets\\Bandits - Pixel Art\\Demo\\Bandit.cs",
               "RelativeDocumentMoniker": "Assets\\Bandits - Pixel Art\\Demo\\Bandit.cs",
@@ -106,25 +119,24 @@
               "RelativeToolTip": "Assets\\Bandits - Pixel Art\\Demo\\Bandit.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-03T13:15:59.805Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-03T13:15:59.805Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 1,
               "Title": "BanditAI.cs",
               "DocumentMoniker": "C:\\Users\\user\\2D_game\\Assets\\BanditAI.cs",
               "RelativeDocumentMoniker": "Assets\\BanditAI.cs",
               "ToolTip": "C:\\Users\\user\\2D_game\\Assets\\BanditAI.cs",
               "RelativeToolTip": "Assets\\BanditAI.cs",
-              "ViewState": "AgIAAPcAAAAAAAAAAAAAAGAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAGIBAAAAAAAAAAAAADYAAAAbAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-03T08:30:41.054Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": "GrappingLineHook.cs",
               "DocumentMoniker": "C:\\Users\\user\\2D_game\\Assets\\GrappingLineHook.cs",
               "RelativeDocumentMoniker": "Assets\\GrappingLineHook.cs",
@@ -132,8 +144,7 @@
               "RelativeToolTip": "Assets\\GrappingLineHook.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAFQBAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-03T07:37:40.857Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-03T07:37:40.857Z"
             }
           ]
         }
