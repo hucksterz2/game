@@ -100649,6 +100649,28 @@ MonoBehaviour:
   recoverDelay: 1.2
   useRecoverAnim: 1
   meleeHitRange: 2
+--- !u!114 &1296373668
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1296373666}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d9800093c257d64db5023045a5cd91f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossDefeatTrigger
+  bossHealth: {fileID: 0}
+  portrait: {fileID: 0}
+  dialogueLines:
+  - cerf
+  - "\u0444\u044B\u044B\u0444"
+  - "\u0444\u044B\u0432"
+  deathAnimDuration: 1.5
+  pauseTimeDuringDialog: 1
+  destroyBossAfterDialog: 1
+  setFlag: 'finalBossDefeated '
 --- !u!1 &1324269074
 GameObject:
   m_ObjectHideFlags: 0
@@ -100870,6 +100892,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1463392086428580, guid: 3248535f6a2562c489a1223a75951ef2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1296373667}
+    - targetCorrespondingSourceObject: {fileID: 1463392086428580, guid: 3248535f6a2562c489a1223a75951ef2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1296373668}
   m_SourcePrefab: {fileID: 100100000, guid: 3248535f6a2562c489a1223a75951ef2, type: 3}
 --- !u!1 &1809617760
 GameObject:
