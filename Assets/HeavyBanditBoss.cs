@@ -105,8 +105,9 @@ public class HeavyBanditBoss : MonoBehaviour
     IEnumerator BossLoop()
     {
         yield return new WaitForSeconds(0.6f);
-        float nextKnife  = Time.time + Random.Range(6f, 9f);
-        float nextDash   = Time.time + 4f;
+        float nextKnife        = Time.time + Random.Range(6f, 9f);
+        float nextDash         = Time.time + 4f;
+        float nextVerticalDash = 0f;
         int   chaseCount = 0;
 
         while (state != BossState.Dead)
@@ -114,9 +115,20 @@ public class HeavyBanditBoss : MonoBehaviour
             if (player == null) { yield return null; continue; }
 
             float hdist     = Mathf.Abs(GetVisualCenter(transform).x - GetVisualCenter(player).x);
+            float vdist     = Mathf.Abs(GetVisualCenter(transform).y - GetVisualCenter(player).y);
             bool  enraged   = IsEnraged;
             bool  canDash   = Time.time >= nextDash;
             float dashCD    = enraged ? 4f : 6f;
+
+            if (vdist > 2.5f && Time.time >= nextVerticalDash)
+            {
+                nextVerticalDash = Time.time + 1.2f;
+                nextDash         = Time.time + dashCD;
+                chaseCount       = 0;
+                yield return StartCoroutine(DoShadowDash());
+                yield return new WaitForSeconds(enraged ? 0.08f : 0.15f);
+                continue;
+            }
 
             if (hitsReceived >= (enraged ? 2 : 3) && canDash)
             {
@@ -306,6 +318,7 @@ public class HeavyBanditBoss : MonoBehaviour
 
             float desiredCenterX = playerCenter.x + behindDir * behindDistance;
             float teleportX      = desiredCenterX - bossOffset.x;
+            teleportX = Mathf.Clamp(teleportX, arenaMinX + bossHalfW, arenaMaxX - bossHalfW);
 
             float teleportY = transform.position.y;
             if (bCol != null && pCol != null)
@@ -319,6 +332,7 @@ public class HeavyBanditBoss : MonoBehaviour
         }
         if (sr != null) sr.color = Color.white;
         FacePlayer();
+        transform.localScale = new Vector3(-transform.localScale.x, transform.localScale.y, transform.localScale.z);
 
         wasCounterHit       = false;
         shadowCounterActive = true;

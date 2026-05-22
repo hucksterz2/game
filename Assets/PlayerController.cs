@@ -245,7 +245,7 @@ public class PlayerController : MonoBehaviour
             comboResetTimer -= Time.deltaTime;
             if (comboResetTimer <= 0f) comboStep = 0;
         }
-        if (Keyboard.current.fKey.wasPressedThisFrame && attackCooldownTimer <= 0f && !isDashing && !isPlunging)
+        if (Mouse.current.leftButton.wasPressedThisFrame && attackCooldownTimer <= 0f && !isDashing && !isPlunging)
             PerformComboAttack();
 
         parryCooldownTimer -= Time.deltaTime;
@@ -391,7 +391,7 @@ public class PlayerController : MonoBehaviour
 
         ShowPlungePrompt(plungeTarget != null || plungeTargetBoss != null || plungeTargetBossHealth != null);
 
-        if ((plungeTarget != null || plungeTargetBoss != null || plungeTargetBossHealth != null) && Keyboard.current.eKey.wasPressedThisFrame)
+        if ((plungeTarget != null || plungeTargetBoss != null || plungeTargetBossHealth != null) && Keyboard.current.fKey.wasPressedThisFrame)
         {
             isPlunging          = true;
             plungeAnimTriggered = true;
@@ -571,7 +571,7 @@ public class PlayerController : MonoBehaviour
             var textGO = new GameObject("Label");
             textGO.transform.SetParent(plungePromptGO.transform, false);
             var text = textGO.AddComponent<Text>();
-            text.text      = "[E]  Удар сверху";
+            text.text      = "[F]  Удар сверху";
             text.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize  = 34;
             text.color     = new Color(1f, 0.9f, 0.1f);
