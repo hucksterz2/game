@@ -316,12 +316,6 @@ public class HeavyBanditBoss : MonoBehaviour
 
             transform.position = new Vector3(teleportX, teleportY, transform.position.z);
             rb.linearVelocity  = Vector2.zero;
-
-            Debug.Log($"[BOSS TELEPORT] player.x={pT.position.x:F2} playerCenter.x={playerCenter.x:F2} bossHalfW={bossHalfW:F2} playerHalfW={playerHalfW:F2} dist={behindDistance:F2} facingLeft={facingLeft} -> boss.transform.x={teleportX:F2}");
-        }
-        else
-        {
-            Debug.LogWarning("[BOSS TELEPORT] player reference is NULL — boss can't teleport behind player!");
         }
         if (sr != null) sr.color = Color.white;
         FacePlayer();
@@ -579,36 +573,29 @@ public class HeavyBanditBoss : MonoBehaviour
         transform.localScale = new Vector3(-d * baseScaleX, baseScaleY, baseScaleZ);
     }
 
-    static Vector2 GetEntityCenter(Transform t)
-    {
-        var rootCol = t.GetComponent<Collider2D>();
-        if (rootCol != null && !rootCol.isTrigger) return rootCol.bounds.center;
-        foreach (var c in t.GetComponentsInChildren<Collider2D>())
-            if (c != null && !c.isTrigger) return c.bounds.center;
-        var sr2 = t.GetComponent<SpriteRenderer>() ?? t.GetComponentInChildren<SpriteRenderer>();
-        if (sr2 != null) return sr2.bounds.center;
-        return t.position;
-    }
-
     static Collider2D GetPrimaryCollider(Transform t)
     {
-        var rootCol = t.GetComponent<Collider2D>();
-        if (rootCol != null && !rootCol.isTrigger) return rootCol;
-        foreach (var c in t.GetComponentsInChildren<Collider2D>())
+        Transform root = t.root;
+        var c0 = root.GetComponent<Collider2D>();
+        if (c0 != null && !c0.isTrigger) return c0;
+        foreach (var c in root.GetComponentsInChildren<Collider2D>())
             if (c != null && !c.isTrigger) return c;
         return null;
     }
 
     static Vector2 GetVisualCenter(Transform t)
     {
-        var rootCol = t.GetComponent<Collider2D>();
-        if (rootCol != null && !rootCol.isTrigger) return rootCol.bounds.center;
-        foreach (var c in t.GetComponentsInChildren<Collider2D>())
+        Transform root = t.root;
+        var c0 = root.GetComponent<Collider2D>();
+        if (c0 != null && !c0.isTrigger) return c0.bounds.center;
+        foreach (var c in root.GetComponentsInChildren<Collider2D>())
             if (c != null && !c.isTrigger) return c.bounds.center;
-        var sr2 = t.GetComponent<SpriteRenderer>() ?? t.GetComponentInChildren<SpriteRenderer>();
+        var sr2 = root.GetComponent<SpriteRenderer>() ?? root.GetComponentInChildren<SpriteRenderer>();
         if (sr2 != null && sr2.sprite != null) return sr2.bounds.center;
-        return t.position;
+        return root.position;
     }
+
+    static Vector2 GetEntityCenter(Transform t) => GetVisualCenter(t);
 
     void TriggerAnim(string name)
     {
