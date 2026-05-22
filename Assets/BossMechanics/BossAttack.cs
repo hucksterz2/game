@@ -497,7 +497,7 @@ public class BossAttack : MonoBehaviour
         if (playerHealth != null)
         {
             float yDiff = playerTransform.position.y - transform.position.y;
-            if (yDiff <= 1f && Vector2.Distance(transform.position, playerTransform.position) <= attackRange)
+            if (yDiff <= 3f && Vector2.Distance(transform.position, playerTransform.position) <= attackRange)
             {
                 int damage = Random.Range(10, 31);
                 playerHealth.TakeDamage(damage);
