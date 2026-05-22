@@ -119,6 +119,9 @@ public class PlayerController : MonoBehaviour
     private float startupDelay = 0.15f;
     private float maxFallVelocity;
 
+    private float lastDashTime = -10f;
+    private float lastJumpTime = -10f;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -242,7 +245,7 @@ public class PlayerController : MonoBehaviour
             comboResetTimer -= Time.deltaTime;
             if (comboResetTimer <= 0f) comboStep = 0;
         }
-        if (Keyboard.current.fKey.wasPressedThisFrame && attackCooldownTimer <= 0f && !isDashing && !isPlunging)
+        if (Mouse.current.leftButton.wasPressedThisFrame && attackCooldownTimer <= 0f && !isDashing && !isPlunging)
             PerformComboAttack();
 
         parryCooldownTimer -= Time.deltaTime;
@@ -301,6 +304,7 @@ public class PlayerController : MonoBehaviour
             if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) move =  1f;
             if (move == 0f) move = transform.localScale.x > 0 ? -1f : 1f;
             dashDirection = move; isDashing = true; dashTimer = dashDuration;
+            lastDashTime = Time.time;
             dashCooldownTimer = dashCooldown; dashThroughUsed = false;
             IsDashInvincible = true;
             StartCoroutine(DashBlinkRoutine());
@@ -387,7 +391,7 @@ public class PlayerController : MonoBehaviour
 
         ShowPlungePrompt(plungeTarget != null || plungeTargetBoss != null || plungeTargetBossHealth != null);
 
-        if ((plungeTarget != null || plungeTargetBoss != null || plungeTargetBossHealth != null) && Keyboard.current.eKey.wasPressedThisFrame)
+        if ((plungeTarget != null || plungeTargetBoss != null || plungeTargetBossHealth != null) && Keyboard.current.fKey.wasPressedThisFrame)
         {
             isPlunging          = true;
             plungeAnimTriggered = true;
@@ -420,6 +424,7 @@ public class PlayerController : MonoBehaviour
                     RestoreCeilings(); isOnLadder = false; isClimbing = false;
                     rb.gravityScale   = originalGravityScale;
                     rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+                    lastJumpTime = Time.time;
                     jumpsLeft = Mathf.Max(0, maxJumps - 1); jumpBufferTimer = 0;
                 }
                 if (anim != null) anim.SetFloat("MoveSpeed", Mathf.Abs(vIn));
@@ -447,6 +452,7 @@ public class PlayerController : MonoBehaviour
         {
             if (isWallSliding) { rb.linearVelocity = new Vector2(-wallDirection * wallJumpForceX, wallJumpForceY); jumpsLeft = maxJumps - 1; }
             else               { rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce); jumpsLeft = Mathf.Max(0, jumpsLeft - 1); coyoteTimer = 0; }
+            lastJumpTime = Time.time;
             jumpBufferTimer = 0;
         }
     }
@@ -468,10 +474,10 @@ public class PlayerController : MonoBehaviour
 
         if (target != null)
         {
-            EnemyHealthBar bar = target.GetComponent<EnemyHealthBar>();
-            if (bar != null) bar.TakeDamage(plungeDamage);
-            else             target.TakeDamage(plungeDamage);
-            target.StunWithKnockback(0.5f, new Vector2(0f, -2f));
+                ActionSnapshot snap = GetCurrentSnapshot();
+                BanditMemory.RecordPlayerAttack(PlayerAttackType.Plunge, snap);
+                target.TakeDamageFromPlayer(plungeDamage, PlayerAttackType.Plunge, snap, this);
+                target.StunWithKnockback(0.5f, new Vector2(0f, -2f));
 
             if (playerCol != null)
                 foreach (var ec in target.GetComponentsInChildren<Collider2D>(true))
@@ -524,10 +530,15 @@ public class PlayerController : MonoBehaviour
             if (bandit == null && bar == null && boss == null && bossH == null) continue;
 
             dashThroughUsed = true;
-            if (boss   != null)       boss.TakeDamage(dashDamage);
-            else if (bossH != null)   bossH.TakeDamage(dashDamage);
-            else if (bar != null)     bar.TakeDamage(dashDamage);
-            else if (bandit != null)  bandit.TakeDamage(dashDamage);
+            if (boss != null) boss.TakeDamage(dashDamage);
+            else if (bossH != null) bossH.TakeDamage(dashDamage);
+            else if (bandit != null)
+            {
+                ActionSnapshot snap = GetCurrentSnapshot();
+                BanditMemory.RecordPlayerAttack(PlayerAttackType.Dash, snap);
+                bandit.TakeDamageFromPlayer(dashDamage, PlayerAttackType.Dash, snap, this);
+            }
+            else if (bar != null) bar.TakeDamage(dashDamage);
             if (bandit != null) bandit.ApplySlow(1.5f);
 
             Collider2D[] enemyCols = col.transform.root.GetComponentsInChildren<Collider2D>();
@@ -560,7 +571,7 @@ public class PlayerController : MonoBehaviour
             var textGO = new GameObject("Label");
             textGO.transform.SetParent(plungePromptGO.transform, false);
             var text = textGO.AddComponent<Text>();
-            text.text      = "[E]  Удар сверху";
+            text.text      = "[F]  Удар сверху";
             text.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize  = 34;
             text.color     = new Color(1f, 0.9f, 0.1f);
@@ -625,10 +636,18 @@ public class PlayerController : MonoBehaviour
             float maxDist  = (bossH != null) ? hardMaxReach + 3f : hardMaxReach;
             if (rootDist > maxDist) continue;
 
-            if (boss   != null) { boss.TakeDamage(damage); bossHit = true; }
+            if (boss != null) { boss.TakeDamage(damage); bossHit = true; }
             else if (bossH != null) { bossH.TakeDamage(damage); bossHit = true; }
-            else if (bar != null)    bar.TakeDamage(damage);
-            else if (bandit != null) bandit.TakeDamage(damage);
+            else if (bandit != null)
+            {
+                PlayerAttackType type = comboStep == 0 ? PlayerAttackType.Combo1
+                                      : comboStep == 1 ? PlayerAttackType.Combo2
+                                      : PlayerAttackType.Combo3;
+                ActionSnapshot snap = GetCurrentSnapshot();
+                BanditMemory.RecordPlayerAttack(type, snap);
+                bandit.TakeDamageFromPlayer(damage, type, snap, this);
+            }
+            else if (bar != null) bar.TakeDamage(damage);
 
             if (bandit != null && isFinal)
                 bandit.StunWithKnockback(0.65f, new Vector2(dir * 6f, 3f));
@@ -720,5 +739,21 @@ public class PlayerController : MonoBehaviour
         foreach (var p in anim.parameters)
             if (p.name == fallback && p.type == AnimatorControllerParameterType.Trigger)
             { anim.SetTrigger(fallback); return; }
+    }
+
+    public ActionSnapshot GetCurrentSnapshot()
+    {
+        float moveX = 0f;
+        if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) moveX = -1f;
+        if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) moveX = 1f;
+
+        return new ActionSnapshot
+        {
+            moveDir = (sbyte)Mathf.Sign(moveX),
+            inAir = !IsGrounded(),
+            recentDash = Time.time - lastDashTime < 0.5f,
+            recentJump = Time.time - lastJumpTime < 0.5f,
+            wasBlocking = IsBlocking
+        };
     }
 }

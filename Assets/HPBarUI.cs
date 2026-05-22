@@ -11,7 +11,6 @@ public class HPBarUI : MonoBehaviour
 
     void Start()
     {
-        // Авто-поиск PlayerHealth если не назначен в инспекторе
         if (playerHealth == null)
             playerHealth = FindFirstObjectByType<PlayerHealth>();
 
@@ -20,7 +19,6 @@ public class HPBarUI : MonoBehaviour
 
     Canvas FindScreenCanvas()
     {
-        // Ищем Screen Space холст, а не World Space (у врагов он World Space)
         foreach (var c in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
             if (c.renderMode == RenderMode.ScreenSpaceOverlay) return c;
         foreach (var c in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))

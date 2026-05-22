@@ -1,3 +1,4 @@
+using Cainos.LucidEditor;
 using UnityEngine;
 
 public class BanditAI : MonoBehaviour
@@ -60,6 +61,12 @@ public class BanditAI : MonoBehaviour
 
     private bool  isHurt;
     private float hurtTimer;
+    private bool isHoldingPosition;
+
+    [Header("Осведомленность")]
+    public bool isAware = false;
+    public float awarenessRadius = 35f;
+    private float confidenceScale = 1f;
 
     void Start()
     {
@@ -91,6 +98,16 @@ public class BanditAI : MonoBehaviour
 
     void Update()
     {
+        if (isAware)
+        {
+            SpriteRenderer sr = GetComponentInChildren<SpriteRenderer>();
+            if(sr != null)
+            {
+                Color awareTint = new Color(1f, 0.92f, 0.75f);
+                sr.color = Color.Lerp(sr.color, awareTint, Time.deltaTime * 2f);
+            }
+        }
+
         attackTimer -= Time.deltaTime;
 
         if (isSlowed) { slowTimer -= Time.deltaTime; if (slowTimer <= 0f) isSlowed = false; }
@@ -145,35 +162,73 @@ public class BanditAI : MonoBehaviour
 
         if (playerNearby)
         {
-            stuckTimer += Time.deltaTime;
-            if (stuckTimer >= 0.25f)
-            {
-                if (Mathf.Abs(transform.position.x - lastPosX) < 0.05f)
-                    rb.AddForce(Vector2.up * 5f, ForceMode2D.Impulse);
-                lastPosX   = transform.position.x;
-                stuckTimer = 0f;
-            }
-
             int chaseDir = player.position.x > transform.position.x ? 1 : -1;
             direction = chaseDir;
 
-            rb.linearVelocity = new Vector2(currentSpeed * chaseSpeedMult * chaseDir, rb.linearVelocity.y);
+            float preferred = GetPreferredDistance();
+            float hdist = Mathf.Abs(transform.position.x - player.position.x);
+
+            if (preferred > 0f)
+            {
+                int awayDir = -chaseDir;
+
+                if (hdist < preferred - 0.3f)
+                {
+                    isHoldingPosition = false;
+                    stuckTimer = 0f;
+                    rb.linearVelocity = new Vector2(currentSpeed * awayDir, rb.linearVelocity.y);
+                }
+                else if (hdist > preferred + 0.3f)
+                {
+                    isHoldingPosition = false;
+                    stuckTimer += Time.deltaTime;
+                    if (stuckTimer >= 0.25f)
+                    {
+                        if (Mathf.Abs(transform.position.x - lastPosX) < 0.05f)
+                            rb.AddForce(Vector2.up * 5f, ForceMode2D.Impulse);
+                        lastPosX = transform.position.x;
+                        stuckTimer = 0f;
+                    }
+                    rb.linearVelocity = new Vector2(currentSpeed * chaseSpeedMult * chaseDir, rb.linearVelocity.y);
+                }
+                else
+                {
+                    isHoldingPosition = true;
+                    stuckTimer = 0f;
+                    rb.linearVelocity = new Vector2(rb.linearVelocity.x * 0.85f, rb.linearVelocity.y);
+                }
+            }
+            else
+            {
+                isHoldingPosition = false;
+                stuckTimer += Time.deltaTime;
+                if (stuckTimer >= 0.25f)
+                {
+                    if (Mathf.Abs(transform.position.x - lastPosX) < 0.05f)
+                        rb.AddForce(Vector2.up * 5f, ForceMode2D.Impulse);
+                    lastPosX = transform.position.x;
+                    stuckTimer = 0f;
+                }
+                rb.linearVelocity = new Vector2(currentSpeed * chaseSpeedMult * chaseDir, rb.linearVelocity.y);
+            }
 
             if (!isAttacking)
                 transform.localScale = new Vector3(-chaseDir * baseScaleX, baseScaleY, baseScaleZ);
         }
+
         else
         {
+            isHoldingPosition = false;
             stuckTimer = 0f;
-            lastPosX   = transform.position.x;
+            lastPosX = transform.position.x;
             turnCooldown = Mathf.Max(0f, turnCooldown - Time.deltaTime);
 
             bool groundAhead = (groundLayer == 0) || CheckGroundAhead();
-            bool wallAhead   = (groundLayer != 0) && CheckWallAhead();
+            bool wallAhead = (groundLayer != 0) && CheckWallAhead();
 
             float dx = transform.position.x - startPos.x;
             bool shouldTurn = false;
-            if (dx >  patrolDistance && direction ==  1) shouldTurn = true;
+            if (dx > patrolDistance && direction == 1) shouldTurn = true;
             if (dx < -patrolDistance && direction == -1) shouldTurn = true;
             if (turnCooldown <= 0f && (!groundAhead || wallAhead)) shouldTurn = true;
 
@@ -185,7 +240,7 @@ public class BanditAI : MonoBehaviour
                 transform.localScale = new Vector3(-direction * baseScaleX, baseScaleY, baseScaleZ);
         }
 
-        SetAnim(isAttacking ? ANIM_ATTACK : ANIM_RUN);
+        SetAnim(isAttacking ? ANIM_ATTACK : isHoldingPosition ? ANIM_ATTACK : ANIM_RUN);
     }
 
     void PerformMeleeAttack()
@@ -236,6 +291,54 @@ public class BanditAI : MonoBehaviour
         if (playerHealth != null) playerHealth.TakeDamage(attackDamage);
     }
 
+    public void BecomeAware()
+    {
+        if (isAware) return;
+        isAware = true;
+        confidenceScale = 0.5f;
+
+        SpriteRenderer sr = GetComponentInChildren<SpriteRenderer>();
+        if (sr != null) StartCoroutine(AwarenessFlash(sr));
+    }
+
+    System.Collections.IEnumerator AwarenessFlash(SpriteRenderer sr)
+    {
+        Color orig = sr.color;
+        for (int i = 0; i < 2; i++) 
+        {
+            sr.color = new Color(1f, 0.85f, 0.3f);
+            yield return new WaitForSeconds(0.1f);
+            if (sr != null) sr.color = orig;
+            yield return new WaitForSeconds(0.1f);
+        }
+    }
+
+    float GetPreferredDistance()
+    {
+        if (!BanditMemory.HasKnowledge) return 0f;
+
+        switch (BanditMemory.MostCommonAttack)
+        {
+            case PlayerAttackType.Combo1:
+            case PlayerAttackType.Combo2:
+            case PlayerAttackType.Combo3:
+                return 3.8f;
+            case PlayerAttackType.Dash:
+                return 5.5f;
+            case PlayerAttackType.Plunge:
+                return 1.2f;
+            default:
+                return 0f;
+        }
+    }
+
+    bool HasSpaceBehind(int awayDir)
+    {
+        Vector2 origin = (Vector2)transform.position + Vector2.up * 0.15f;
+        RaycastHit2D hit = Physics2D.Raycast(origin, new Vector2(awayDir, 0), 1.5f, groundLayer);
+        return hit.collider == null;
+    }
+
     public void Stun(float duration)
     {
         EnemyHealthBar bar = GetComponent<EnemyHealthBar>();
@@ -274,6 +377,48 @@ public class BanditAI : MonoBehaviour
         Transform parent = (bar != null && bar.IsDead) ? null : transform;
         BloodParticles.Spawn(pos, amount, parent);
         DamageNumber.Show(amount, pos + Vector3.up * 0.6f);
+    }
+
+    public void TakeDamageFromPlayer(int amount, PlayerAttackType type, ActionSnapshot snap, PlayerController player)
+    {
+        EnemyHealthBar bar = GetComponent<EnemyHealthBar>();
+        if (bar != null && bar.IsDead) return;
+
+        float confidence = BanditMemory.GetParryConfidence(type, snap);
+
+        if (confidence > 0.2f && Random.value < confidence)
+        {
+            int reflected = Mathf.Max(1, amount / 2);
+            PlayerHealth ph = player != null ? player.GetComponent<PlayerHealth>() : null;
+            if (ph == null) ph = FindFirstObjectByType<PlayerHealth>();
+            if (ph != null) ph.TakeDamage(reflected);
+
+            SpriteRenderer sr = GetComponentInChildren<SpriteRenderer>();
+            if (sr != null) StartCoroutine(ParryFlash(sr));
+            return;
+        }
+        else if (confidence > 0.4f)
+        {
+            SpriteRenderer sr = GetComponentInChildren<SpriteRenderer>();
+            if (sr != null) StartCoroutine(FlinchFlash(sr));
+        }
+
+        TakeDamage(amount);
+    }
+
+    System.Collections.IEnumerator FlinchFlash(SpriteRenderer sr)
+    {
+        Color orig = sr.color;
+        sr.color = new Color(1f, 1f, 0.6f);
+        yield return new WaitForSeconds(0.06f);
+        if (sr != null) sr.color = orig;
+    }
+        System.Collections.IEnumerator ParryFlash(SpriteRenderer sr)
+    {
+        Color orig = sr.color;
+        sr.color = new Color(1f, 0.95f, 0.2f);
+        yield return new WaitForSeconds(0.12f);
+        if (sr != null) sr.color = orig;
     }
 
     public void OnHurt()

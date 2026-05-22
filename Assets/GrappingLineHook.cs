@@ -200,8 +200,11 @@ public class GrapplingHook : MonoBehaviour
     {
         UpdateCooldown();
 
-        if (Mouse.current.leftButton.wasPressedThisFrame)  TryGrapple();
-        if (Mouse.current.rightButton.wasPressedThisFrame && isGrappling) StopGrapple();
+        if (Mouse.current.rightButton.wasPressedThisFrame)
+        {
+            if (isGrappling) StopGrapple();
+            else             TryGrapple();
+        }
         if (!isGrappling) return;
 
         if (isGrapplingEnemy)
