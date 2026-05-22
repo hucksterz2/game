@@ -61,6 +61,13 @@ public class BossHealth : MonoBehaviour
         BossAttack attack = GetComponent<BossAttack>();
         if (attack != null) attack.enabled = false;
 
+        BossDefeatTrigger trigger = GetComponent<BossDefeatTrigger>();
+        if (trigger != null)
+        {
+            trigger.TriggerManually();
+            return;
+        }
+
         Destroy(gameObject, 2f);
     }
 

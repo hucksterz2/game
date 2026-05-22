@@ -134,7 +134,7 @@ public class PlayerHealth : MonoBehaviour
         GameObject canvasGO = new GameObject("DeathCanvas");
         Canvas canvas = canvasGO.AddComponent<Canvas>();
         canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 100;
+        canvas.sortingOrder = 10000;
         canvasGO.AddComponent<CanvasScaler>();
         canvasGO.AddComponent<GraphicRaycaster>();
 
