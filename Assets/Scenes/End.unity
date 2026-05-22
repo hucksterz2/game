@@ -765,7 +765,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -7267684571870204002, guid: bf207d11ac717ee44b4888e264eba2ce, type: 3}
+  m_Sprite: {fileID: -8392090385701712395, guid: 198dc10c6860eb9468196cf02fa3b749, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -892,7 +892,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ece92c46e9cb2294c957f86c912cff31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MusicManager
-  musicClip: {fileID: 8300000, guid: 2d5240232880b64459993b86a2c0d591, type: 3}
+  musicClip: {fileID: 8300000, guid: 09b5e90f958b05342b0916d52160ba0d, type: 3}
   baseVolume: 0.7
 --- !u!82 &1718794710
 AudioSource:

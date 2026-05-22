@@ -38,8 +38,7 @@ public class PlayerDefeatEnding : MonoBehaviour
         {
             triggered = true;
             LastBossLevel = SceneManager.GetActiveScene().name;
-            playerHealth.StopAllCoroutines();
-            Time.timeScale = 0f;
+
             BossHPBar[] hpBars = FindObjectsByType<BossHPBar>(FindObjectsSortMode.None);
             foreach (var bar in hpBars) Destroy(bar.gameObject);
 
@@ -76,8 +75,9 @@ public class DefeatSequencer : MonoBehaviour
 
     IEnumerator Sequence(Sprite portrait, string[] lines, string sceneName, float fadeDuration, float delayBeforeDialog)
     {
-        Time.timeScale = 0f;
         yield return new WaitForSecondsRealtime(delayBeforeDialog);
+        if (playerHealth != null) playerHealth.StopAllCoroutines();
+        Time.timeScale = 0f;
 
         if (lines != null && lines.Length > 0)
         {
