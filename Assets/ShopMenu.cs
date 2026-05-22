@@ -306,6 +306,7 @@ public class ShopMenu : MonoBehaviour
         switch (item.effect)
         {
             case ShopItem.EffectType.IncreaseMaxHP:
+                PlayerStats.BonusMaxHP += item.amount;
                 PlayerHealth ph = player.GetComponentInChildren<PlayerHealth>();
                 if (ph == null) ph = playerObj.GetComponent<PlayerHealth>();
                 if (ph != null)
@@ -318,6 +319,7 @@ public class ShopMenu : MonoBehaviour
                 break;
 
             case ShopItem.EffectType.SpeedBoost:
+                PlayerStats.BonusMaxHP += item.amount;
                 PlayerController pc = player.GetComponentInChildren<PlayerController>();
                 if (pc == null) pc = playerObj.GetComponent<PlayerController>();
                 if (pc != null)

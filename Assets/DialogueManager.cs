@@ -20,6 +20,10 @@ public class DialogueManager : MonoBehaviour
     private string fullLine;
     private bool dialogueActive;
 
+    private Transform currentOwner;
+    private float currentDismissDistance;
+    private Transform playerTransform;
+
     public bool IsActive => dialogueActive;
 
     [System.Serializable]
@@ -105,21 +109,43 @@ public class DialogueManager : MonoBehaviour
 
     public void StartDialogue(Sprite portrait, string[] lines)
     {
+        StartDialogue(portrait, lines, null, 0f);
+    }
+
+    public void StartDialogue(Sprite portrait, string[] lines, Transform owner, float dismissDistance)
+    {
         DialogueLine[] dl = new DialogueLine[lines.Length];
         for (int i = 0; i < lines.Length; i++)
             dl[i] = new DialogueLine { portrait = portrait, text = lines[i] };
-        StartDialogue(dl);
+        StartDialogue(dl, owner, dismissDistance);
     }
 
     public void StartDialogue(DialogueLine[] lines)
+    {
+        StartDialogue(lines, null, 0f);
+    }
+
+    public void StartDialogue(DialogueLine[] lines, Transform owner, float dismissDistance)
     {
         if (lines == null || lines.Length == 0) return;
         currentLines = lines;
         currentIndex = 0;
         dialogueActive = true;
+        currentOwner = owner;
+        currentDismissDistance = dismissDistance;
         panel.SetActive(true);
         StopAllCoroutines();
         StartCoroutine(TypeLine());
+    }
+
+    public void CloseDialogue()
+    {
+        if (!dialogueActive) return;
+        StopAllCoroutines();
+        panel.SetActive(false);
+        dialogueActive = false;
+        isTyping = false;
+        currentOwner = null;
     }
 
     IEnumerator TypeLine()
@@ -131,10 +157,10 @@ public class DialogueManager : MonoBehaviour
         isTyping = true;
         fullLine = line.text;
         bodyText.text = "";
+        float speed = SettingsManager.Instance != null ? SettingsManager.DialogueSpeed : typeSpeed;
         foreach (char c in fullLine)
         {
             bodyText.text += c;
-            float speed = SettingsManager.Instance != null ? SettingsManager.DialogueSpeed : typeSpeed;
             yield return new WaitForSecondsRealtime(speed);
         }
         isTyping = false;
@@ -143,8 +169,27 @@ public class DialogueManager : MonoBehaviour
     void Update()
     {
         if (!dialogueActive) return;
-        if (Keyboard.current == null) return;
 
+        if (currentOwner != null && currentDismissDistance > 0f)
+        {
+            if (playerTransform == null || !playerTransform.gameObject.activeInHierarchy)
+            {
+                GameObject p = GameObject.FindGameObjectWithTag("Player");
+                if (p != null) playerTransform = p.transform.root;
+            }
+
+            if (playerTransform != null)
+            {
+                float dist = Vector2.Distance(currentOwner.position, playerTransform.position);
+                if (dist > currentDismissDistance)
+                {
+                    CloseDialogue();
+                    return;
+                }
+            }
+        }
+
+        if (Keyboard.current == null) return;
         if (Keyboard.current.eKey.wasPressedThisFrame)
         {
             if (isTyping)
@@ -160,6 +205,7 @@ public class DialogueManager : MonoBehaviour
                 {
                     panel.SetActive(false);
                     dialogueActive = false;
+                    currentOwner = null;
                 }
                 else StartCoroutine(TypeLine());
             }

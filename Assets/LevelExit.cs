@@ -138,6 +138,7 @@ public class LevelExit : MonoBehaviour
         }
 
         Time.timeScale = 1f;
+        CoinManager.CommitLevelCoins();
         SceneManager.LoadScene(nextSceneName);
     }
 
