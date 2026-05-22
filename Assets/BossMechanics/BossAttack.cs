@@ -342,7 +342,7 @@ public class BossAttack : MonoBehaviour
 
         CircleCollider2D col = proj.AddComponent<CircleCollider2D>();
         col.isTrigger = true;
-        col.radius = 0.001f;
+        col.radius = 0.12f;
         col.enabled = false;
 
         Rigidbody2D rb = proj.AddComponent<Rigidbody2D>();

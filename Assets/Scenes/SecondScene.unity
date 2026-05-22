@@ -106677,7 +106677,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossHealthBarUI
   bossHealth: {fileID: 626641796}
-  bossName: Big Bloated
+  bossName: "\u0411\u043E\u043B\u043E\u0442\u043D\u044B\u0439 \u0411\u043E\u0441\u0441"
   showOnStart: 0
 --- !u!114 &626641796
 MonoBehaviour:
