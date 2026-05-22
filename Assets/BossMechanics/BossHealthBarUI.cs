@@ -54,8 +54,8 @@ public class BossHealthBarUI : MonoBehaviour
         panelRect.anchorMin = new Vector2(0.5f, 0);
         panelRect.anchorMax = new Vector2(0.5f, 0);
         panelRect.pivot = new Vector2(0.5f, 0);
-        panelRect.anchoredPosition = new Vector2(0, 60);
-        panelRect.sizeDelta = new Vector2(900, 110);
+        panelRect.anchoredPosition = new Vector2(0, 40);
+        panelRect.sizeDelta = new Vector2(600, 90);
 
         Image outerFrame = panel.AddComponent<Image>();
         outerFrame.color = new Color(0.65f, 0.5f, 0.2f, 1f);
@@ -74,7 +74,7 @@ public class BossHealthBarUI : MonoBehaviour
         nameObj.transform.SetParent(innerBg.transform, false);
         nameText = nameObj.AddComponent<TextMeshProUGUI>();
         nameText.text = bossName;
-        nameText.fontSize = 32;
+        nameText.fontSize = 24;
         nameText.fontStyle = FontStyles.Bold;
         nameText.alignment = TextAlignmentOptions.Center;
         nameText.color = new Color(0.95f, 0.85f, 0.55f);
@@ -85,7 +85,7 @@ public class BossHealthBarUI : MonoBehaviour
         nameRect.anchorMax = new Vector2(1, 1);
         nameRect.pivot = new Vector2(0.5f, 1);
         nameRect.anchoredPosition = new Vector2(0, -5);
-        nameRect.sizeDelta = new Vector2(0, 45);
+        nameRect.sizeDelta = new Vector2(0, 35);
 
         GameObject barBg = new GameObject("BarBg");
         barBg.transform.SetParent(innerBg.transform, false);
@@ -96,7 +96,7 @@ public class BossHealthBarUI : MonoBehaviour
         barBgRect.anchorMax = new Vector2(1, 0);
         barBgRect.pivot = new Vector2(0.5f, 0);
         barBgRect.anchoredPosition = new Vector2(0, 15);
-        barBgRect.sizeDelta = new Vector2(-50, 35);
+        barBgRect.sizeDelta = new Vector2(-50, 30);
 
         GameObject delayed = new GameObject("DelayedFill");
         delayed.transform.SetParent(barBg.transform, false);

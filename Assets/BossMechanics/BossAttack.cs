@@ -71,10 +71,10 @@ public class BossAttack : MonoBehaviour
         if (ph != null)
         {
             playerHealth = ph;
-            playerTransform = ph.transform;
             playerRb = ph.GetComponent<Rigidbody2D>();
             if (playerRb == null)
                 playerRb = ph.GetComponentInParent<Rigidbody2D>();
+            playerTransform = playerRb != null ? playerRb.transform : ph.transform;
         }
     }
 
