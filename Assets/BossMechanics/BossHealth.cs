@@ -24,6 +24,12 @@ public class BossHealth : MonoBehaviour
 
         currentHP = Mathf.Max(0, currentHP - amount);
 
+        BloodParticles.Spawn(transform.position + Vector3.up * 1f, amount, transform);
+        DamageNumber.Show(amount, transform.position + Vector3.up * 2f);
+
+        BossHealthBarUI bar = GetComponent<BossHealthBarUI>();
+        if (bar != null) bar.ShowBar();
+
         if (animator != null)
         {
             bool isPhase2 = currentHP <= maxHP * 0.5f;
