@@ -131,7 +131,7 @@ public class SightInteract : MonoBehaviour
             GameObject go = new GameObject("DialogueManager");
             go.AddComponent<DialogueManager>();
         }
-        DialogueManager.Instance.StartDialogue(portrait, lines);
+        DialogueManager.Instance.StartDialogue(portrait, lines, transform, interactRadius + 1f);
     }
 
     void OnDrawGizmosSelected()

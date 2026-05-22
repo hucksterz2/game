@@ -11,6 +11,7 @@ public class BossDefeatTrigger : MonoBehaviour
     [TextArea(2, 5)] public string[] dialogueLines;
 
     [Header("ѕараметры")]
+    public string dieAnimName = "death";
     public float deathAnimDuration = 1.5f;
     public bool pauseTimeDuringDialog = true;
     public bool destroyBossAfterDialog = true;
@@ -23,6 +24,19 @@ public class BossDefeatTrigger : MonoBehaviour
     void Start()
     {
         if (bossHealth == null) bossHealth = GetComponent<BossHealth>();
+        if (bossHealth == null) bossHealth = GetComponentInChildren<BossHealth>();
+    }
+
+    void Update()
+    {
+        if (triggered) return;
+        if (bossHealth == null) return;
+
+        if (bossHealth.currentHP <= 0)
+        {
+            triggered = true;
+            StartCoroutine(DefeatRoutine());
+        }
     }
 
     public void TriggerManually()
@@ -37,19 +51,7 @@ public class BossDefeatTrigger : MonoBehaviour
         Debug.Log("BossDefeat: смерть босса");
 
         BossHealthBarUI[] bars = FindObjectsByType<BossHealthBarUI>(FindObjectsSortMode.None);
-        foreach (var bar in bars)
-        {
-            Transform panelT = bar.transform.Find("BossHPPanel");
-            if (panelT == null)
-            {
-                Transform[] children = bar.GetComponentsInChildren<Transform>(true);
-                foreach (var t in children)
-                {
-                    if (t.name == "BossHPPanel") { Destroy(t.gameObject); break; }
-                }
-            }
-            Destroy(bar);
-        }
+        foreach (var bar in bars) Destroy(bar);
 
         Canvas[] allCanvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
         foreach (var canvas in allCanvases)
@@ -79,9 +81,22 @@ public class BossDefeatTrigger : MonoBehaviour
         Collider2D[] cols = GetComponentsInChildren<Collider2D>();
         foreach (var c in cols) c.enabled = false;
 
+        Animator anim = GetComponentInChildren<Animator>();
+        if (anim != null)
+        {
+            anim.enabled = true;
+            anim.speed = 1f;
+            foreach (var p in anim.parameters)
+            {
+                if (p.name != dieAnimName) continue;
+                if (p.type == AnimatorControllerParameterType.Trigger) anim.SetTrigger(dieAnimName);
+                else if (p.type == AnimatorControllerParameterType.Bool) anim.SetBool(dieAnimName, true);
+                break;
+            }
+        }
+
         yield return new WaitForSeconds(deathAnimDuration);
 
-        Animator anim = GetComponentInChildren<Animator>();
         if (anim != null) anim.speed = 0f;
         Debug.Log("BossDefeat: замер на последнем кадре");
 

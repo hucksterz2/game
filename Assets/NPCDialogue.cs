@@ -111,7 +111,7 @@ public class NPCDialogue : MonoBehaviour
             GameObject go = new GameObject("DialogueManager");
             go.AddComponent<DialogueManager>();
         }
-        DialogueManager.Instance.StartDialogue(lines);
+        DialogueManager.Instance.StartDialogue(lines, transform, interactRadius + 1f);
     }
 
     void OnDrawGizmosSelected()

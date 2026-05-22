@@ -108,7 +108,7 @@ public class ChestInteract : MonoBehaviour
                             GameObject go = new GameObject("DialogueManager");
                             go.AddComponent<DialogueManager>();
                         }
-                        DialogueManager.Instance.StartDialogue(lootIcon, new string[] { lootMessage });
+                        DialogueManager.Instance.StartDialogue(lootIcon, new string[] { lootMessage }, transform, interactRadius + 1f);
                     }
                 }
                 else if (canCloseAgain)
