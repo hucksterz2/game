@@ -20,9 +20,13 @@ public class HPBarUI : MonoBehaviour
     Canvas FindScreenCanvas()
     {
         foreach (var c in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
-            if (c.renderMode == RenderMode.ScreenSpaceOverlay) return c;
+            if (c.renderMode == RenderMode.ScreenSpaceOverlay &&
+                c.gameObject.scene.name != "DontDestroyOnLoad")
+                return c;
         foreach (var c in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
-            if (c.renderMode == RenderMode.ScreenSpaceCamera) return c;
+            if (c.renderMode == RenderMode.ScreenSpaceCamera &&
+                c.gameObject.scene.name != "DontDestroyOnLoad")
+                return c;
         return null;
     }
 

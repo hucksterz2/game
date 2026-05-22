@@ -105,10 +105,10 @@ public class PauseMenu : MonoBehaviour
         pr.anchorMax = Vector2.one;
         pr.offsetMin = pr.offsetMax = Vector2.zero;
 
-        AddTitle("�����", 0.78f);
-        AddButton("����������", 0.55f, Continue, new Color(0.2f, 0.5f, 0.3f));
-        AddButton("���������", 0.38f, OpenSettings, new Color(0.25f, 0.4f, 0.6f));
-        AddButton("������� ����", 0.21f, GoToMainMenu, new Color(0.5f, 0.2f, 0.2f));
+        AddTitle("ПАУЗА", 0.78f);
+        AddButton("Продолжить", 0.55f, Continue, new Color(0.2f, 0.5f, 0.3f));
+        AddButton("Настройки", 0.38f, OpenSettings, new Color(0.25f, 0.4f, 0.6f));
+        AddButton("Главное меню", 0.21f, GoToMainMenu, new Color(0.5f, 0.2f, 0.2f));    
 
         panel.SetActive(false);
     }

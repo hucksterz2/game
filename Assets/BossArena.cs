@@ -11,7 +11,7 @@ public class BossArena : MonoBehaviour
 
     IEnumerator Start()
     {
-        yield return null;
+        yield return new WaitForSeconds(1f);
         ready = true;
     }
 

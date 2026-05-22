@@ -61,7 +61,9 @@ public class BombThrower : MonoBehaviour
     {
         Canvas canvas = null;
         foreach (var c in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
-            if (c.renderMode == RenderMode.ScreenSpaceOverlay) { canvas = c; break; }
+            if (c.renderMode == RenderMode.ScreenSpaceOverlay &&
+                c.gameObject.scene.name != "DontDestroyOnLoad") { canvas = c; break; }
+
         if (canvas == null) return;
 
         var panel = new GameObject("BombCooldownUI");
