@@ -98,6 +98,8 @@ public class EnemyHealthBar : MonoBehaviour
     void Die()
     {
         if (barObj != null) { Destroy(barObj); barObj = null; }
+        BanditMemory.OnBanditDefeat();
+
         StartCoroutine(DestroyAfterDelay(deathDestroyDelay));
     }
 
